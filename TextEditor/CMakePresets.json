@@ -1,0 +1,49 @@
+{
+  "version": 5,
+  "include": [ "CMakePresets_user.json" ],
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 24
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "displayName": "base",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "generator": "Ninja",
+      "hidden": true,
+      "inherits": "userDefines"
+    },
+    {
+      "name": "BaseWorkingConfig",
+      "description": "Configuration for working.",
+      "inherits": "base",
+      "hidden": true,
+      "warnings": {
+        "dev": false,
+        "systemVars": true,
+        "deprecated": true,
+        "unusedCli": true,
+        "uninitialized": true
+      },
+      "errors": {
+        "dev": true,
+        "deprecated": true
+      }
+    },
+    {
+      "name": "0-debug",
+      "inherits": "BaseWorkingConfig",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "2-release-normal",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ]
+}
