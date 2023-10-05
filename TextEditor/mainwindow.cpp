@@ -308,6 +308,10 @@ void MainWindow::createActions()
     fileToolBar->addAction(loginAct);
     connect(loginAct, &QAction::triggered, this, &MainWindow::startLoginProcess);
 
+    saveOnline = new QAction("Save online", this);
+    saveOnline->setStatusTip(tr("Save the document online"));
+    fileToolBar->addAction(saveOnline);
+
     fileMenu->addSeparator();
 
 
@@ -470,10 +474,62 @@ void MainWindow::switchLayoutDirection()
 void MainWindow::startLoginProcess()
 {
     qDebug() << "start login";
-    //start auth
+    this->auth = new Authenticator(this);
+    connect(this->auth, &Authenticator::loggedIn, this, &MainWindow::onLoggedIn);
+    this->auth->startLogin();
 }
 
 void MainWindow::onLoggedIn()
 {
     loginAct->setText("You are in");
+    //add right widget to access teams
+    this->dockWidget = new QDockWidget(tr("Dock Widget"), this);
+    addDockWidget(Qt::RightDockWidgetArea, dockWidget);
+    QWidget* multiWidget = new QWidget();
+    dockWidgetlayout = new QVBoxLayout();
+    dockWidgetlayout->setAlignment(Qt::AlignTop);
+    multiWidget->setLayout(dockWidgetlayout);
+    dockWidget->setWidget(multiWidget);
+    this->addTeams();
 }
+
+void MainWindow::addTeams(){
+    QComboBox * selectTeam = new QComboBox(this);
+    this->dockWidgetlayout->addWidget(selectTeam);
+    selectTeam->setPlaceholderText(QStringLiteral("--Select Team--"));
+    selectTeam->setCurrentIndex(-1);
+    this->auth->getTeamsList(selectTeam);
+    connect(this->auth, &Authenticator::channelsListReceived, this, &MainWindow::addChannels);
+}
+
+void MainWindow::addChannels(QMap<QString, QString> channels, QString team_id){
+    QComboBox * selectChannel = new QComboBox(this);
+    this->dockWidgetlayout->addWidget(selectChannel);
+    selectChannel->setPlaceholderText(QStringLiteral("--Select Channel--"));
+    selectChannel->setCurrentIndex(-1);
+    QMap<int, QString> ids;
+    int i=0;
+    for (auto it = channels.begin(); it != channels.end(); ++it){
+        QString channel_name = it.value();
+        selectChannel->addItem(channel_name);
+        ids.insert(i, it.key());
+        ++i;
+    }
+    connect(selectChannel, &QComboBox::activated, [this, ids, team_id](int index){
+        QString channel_id = ids.value(index);
+        this->auth->getFilesFolder(team_id, channel_id, this->dockWidgetlayout);
+    });
+    connect(this->auth, &Authenticator::fileContentReceived, this, &MainWindow::displayFile);
+}
+
+void MainWindow::displayFile(QByteArray fileContent, QString site_id, QString item_id){
+    QTextEdit * text_edit = new QTextEdit(this);
+    text_edit->insertPlainText(fileContent);
+    mdiArea->addSubWindow(text_edit);
+    text_edit->show();
+    connect(this->saveOnline, &QAction::triggered, [text_edit, this, site_id, item_id](){
+        QByteArray new_text = (text_edit->toPlainText()).toUtf8();
+        this->auth->updateFileContent(site_id, item_id, new_text);
+    });
+}
+

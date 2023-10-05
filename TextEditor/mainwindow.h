@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QEvent>
+#include "authenticator.h"
+#include "QBoxLayout"
 
 class MdiChild;
 QT_BEGIN_NAMESPACE
@@ -11,6 +13,12 @@ class QMenu;
 class QMdiArea;
 class QMdiSubWindow;
 QT_END_NAMESPACE
+
+struct fileInfos{
+    QString item_id;
+    QString site_id;
+    QString file_name;
+}; Q_DECLARE_METATYPE(fileInfos)
 
 class MainWindow : public QMainWindow
 {
@@ -41,6 +49,7 @@ public:
     MainWindow();
 
     bool openFile(const QString &fileName);
+    QList<fileInfos> * filesInf;
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -73,12 +82,18 @@ private:
     void setRecentFilesVisible(bool visible);
     MdiChild *activeMdiChild() const;
     QMdiSubWindow *findMdiChild(const QString &fileName) const;
-
     QAction* loginAct;
+    Authenticator * auth;
+    QDockWidget * dockWidget;
+    QVBoxLayout* dockWidgetlayout;
+    void addTeams();
+    QAction * saveOnline;
 
 private slots:
     void startLoginProcess();
     void onLoggedIn();
+    void addChannels(QMap<QString, QString> channels, QString team_id);
+    void displayFile(QByteArray fileContent, QString site_id, QString item_id);
 };
 
 #endif
