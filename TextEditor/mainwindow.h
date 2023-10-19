@@ -3,8 +3,9 @@
 
 #include <QMainWindow>
 #include <QEvent>
-#include "authenticator.h"
 #include "QBoxLayout"
+#include "helperstructures.h"
+#include "authenticator.h"
 
 class MdiChild;
 QT_BEGIN_NAMESPACE
@@ -13,12 +14,6 @@ class QMenu;
 class QMdiArea;
 class QMdiSubWindow;
 QT_END_NAMESPACE
-
-struct fileInfos{
-    QString item_id;
-    QString site_id;
-    QString file_name;
-}; Q_DECLARE_METATYPE(fileInfos)
 
 class MainWindow : public QMainWindow
 {
@@ -49,7 +44,6 @@ public:
     MainWindow();
 
     bool openFile(const QString &fileName);
-    QList<fileInfos> * filesInf;
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -86,13 +80,14 @@ private:
     Authenticator * auth;
     QDockWidget * dockWidget;
     QVBoxLayout* dockWidgetlayout;
-    void addTeams();
     QAction * saveOnline;
 
 private slots:
     void startLoginProcess();
     void onLoggedIn();
+    void addTeams(QList<QPair<QString, QString>> list_id_name);
     void addChannels(QMap<QString, QString> channels, QString team_id);
+    void addFiles(QList<fileInfos> list_file_infos);
     void displayFile(QByteArray fileContent, QString site_id, QString item_id);
 };
 

@@ -47,6 +47,7 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
     mdichild.cpp mdichild.h
     MANUAL_FINALIZATION
     authenticator.h authenticator.cpp
+    helperstructures.h
 )
 
 #############################################################################################

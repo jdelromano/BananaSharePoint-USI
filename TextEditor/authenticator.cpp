@@ -1,4 +1,5 @@
 #include "authenticator.h"
+#include "mainwindow.h"
 #include "qdesktopservices.h"
 #include "qoauthhttpserverreplyhandler.h"
 #include "QFile"
@@ -7,8 +8,7 @@
 #include "QJsonArray"
 #include "QNetworkReply"
 #include "QIterator"
-#include "mainwindow.h"
-#include "qpushbutton.h"
+#include "QList"
 
 Authenticator::Authenticator(QObject *parent) : QObject{parent}{
 
@@ -82,30 +82,23 @@ void Authenticator::startLogin(){
     this->microsoft->grant();
 }
 
-void Authenticator::getTeamsList(QComboBox * selectTeam){
+void Authenticator::getTeamsList(){
     QUrl url("https://graph.microsoft.com/v1.0/me/joinedTeams");
     QNetworkReply * reply =  this->microsoft->get(url);
-    connect(reply, &QNetworkReply::finished, [this, reply, selectTeam](){
+    connect(reply, &QNetworkReply::finished, [this, reply](){
         QJsonObject reply_obj  = (QJsonDocument::fromJson(reply->readAll())).object();
         QJsonArray values = reply_obj["value"].toArray();
         qDebug() << "MY teams:";
-        QMap<int, QString> ids;
+        QList<QPair<QString, QString>> list_id_name;
         for(int p=0; p < values.size(); ++p){
             QJsonObject obj = (values.at(p)).toObject();
             QString team_name = obj["displayName"].toString();
             QString team_id = obj["id"].toString();
-            selectTeam->addItem(team_name);
-            ids.insert(p, team_id);
+            list_id_name.append(qMakePair(team_id, team_name));
             qDebug() << "Team name: " << team_name;
             qDebug() << "Team id: " << team_id;
         }
-        connect(selectTeam, &QComboBox::activated, [ids, this](int index){
-            QString team_id = ids.value(index);
-            qDebug() << "clicked item with index: " << index << " and id: " << team_id;
-            this->getChannelsList(team_id);
-        });
-        //this->getChannelsList("421ef6a4-07d5-4502-9f85-0b828ac95486");
-        //emit teamsListReceived();
+        emit teamsListReceived(list_id_name);
     });
 }
 
@@ -122,52 +115,49 @@ void Authenticator::getChannelsList(QString team_id){
             QString channel_name = obj["displayName"].toString();
             QString channel_id = obj["id"].toString();
             channels.insert(channel_id, channel_name);
-            //this->getFilesFolder(team_id, channel_id);
             qDebug() << "Channel name: " << obj["displayName"].toString();
         }
         emit channelsListReceived(channels, team_id);
     });
 }
 
-void Authenticator::getFilesFolder(QString team_id, QString channel_id, QVBoxLayout* dockWidgetlayout){
+void Authenticator::getFilesFolder(QString team_id, QString channel_id){
     QUrl url("https://graph.microsoft.com/v1.0/teams/" + team_id
              + "/channels/" + channel_id + "/filesFolder?");
     QNetworkReply * reply =  this->microsoft->get(url);
-    connect(reply, &QNetworkReply::finished, [this, reply, dockWidgetlayout](){
+    connect(reply, &QNetworkReply::finished, [this, reply](){
         QJsonObject reply_obj  = (QJsonDocument::fromJson(reply->readAll())).object();
         QString item_id = reply_obj["id"].toString();
         QJsonObject obj = (reply_obj["parentReference"]).toObject();
         QString drive_id = obj["driveId"].toString();
-        this->getFilesFolderContent(drive_id, item_id, dockWidgetlayout);
+        this->getFilesFolderContent(drive_id, item_id);
     });
 }
 
-void Authenticator::getFilesFolderContent(QString drive_id, QString item_id, QVBoxLayout* dockWidgetlayout){
+void Authenticator::getFilesFolderContent(QString drive_id, QString item_id){
     QUrl url("https://graph.microsoft.com/v1.0/drives/" + drive_id
              + "/items/" + item_id + "/children");
     QNetworkReply * reply =  this->microsoft->get(url);
-    connect(reply, &QNetworkReply::finished, [this, reply, dockWidgetlayout](){
+    connect(reply, &QNetworkReply::finished, [this, reply](){
         QJsonObject reply_obj  = (QJsonDocument::fromJson(reply->readAll())).object();
         QJsonArray values = reply_obj["value"].toArray();
         qDebug() << "My files:";
+        QList<fileInfos> list_file_infos;
         for(int p=0; p < values.size(); ++p){
             QJsonObject obj = (values.at(p)).toObject();
             QString item_id = obj["id"].toString();
             QJsonObject obj2 = (obj["parentReference"]).toObject();
             QString site_id = obj2["siteId"].toString();
             QString file_name = obj["name"].toString();
+            list_file_infos.append({item_id, site_id, file_name});
             qDebug() << "File name: " << file_name;
-            QPushButton * button = new QPushButton();
-            button->setText(file_name);
-            connect(button, &QPushButton::clicked, [this, site_id, item_id, dockWidgetlayout](){
-                this->getFileContent(site_id, item_id);
-            });
-            dockWidgetlayout->addWidget(button);
         }
+        emit filesListReceived(list_file_infos);
     });
 }
 
 void Authenticator::getFileContent(QString site_id, QString item_id){
+    qDebug() << "here";
     QUrl url("https://graph.microsoft.com/v1.0/sites/" + site_id
              +"/drive/items/"+ item_id + "/content");
     QNetworkReply * reply =  this->microsoft->get(url);

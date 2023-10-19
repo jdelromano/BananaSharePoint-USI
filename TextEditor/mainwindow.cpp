@@ -490,15 +490,24 @@ void MainWindow::onLoggedIn()
     dockWidgetlayout->setAlignment(Qt::AlignTop);
     multiWidget->setLayout(dockWidgetlayout);
     dockWidget->setWidget(multiWidget);
-    this->addTeams();
+    connect(this->auth, &Authenticator::teamsListReceived, this, &MainWindow::addTeams);
+    this->auth->getTeamsList();
 }
 
-void MainWindow::addTeams(){
+void MainWindow::addTeams(QList<QPair<QString, QString>> list_id_name){
     QComboBox * selectTeam = new QComboBox(this);
     this->dockWidgetlayout->addWidget(selectTeam);
     selectTeam->setPlaceholderText(QStringLiteral("--Select Team--"));
     selectTeam->setCurrentIndex(-1);
-    this->auth->getTeamsList(selectTeam);
+    for (auto i = list_id_name.begin(); i != list_id_name.end(); i++){
+        QString team_name = i->second;
+        selectTeam->addItem(team_name);
+    }
+    connect(selectTeam, &QComboBox::activated, [list_id_name, this](int index){
+        QString team_id = list_id_name.at(index).first;
+        qDebug() << "clicked item with index: " << index << " and id: " << team_id;
+        this->auth->getChannelsList(team_id);
+    });
     connect(this->auth, &Authenticator::channelsListReceived, this, &MainWindow::addChannels);
 }
 
@@ -517,9 +526,26 @@ void MainWindow::addChannels(QMap<QString, QString> channels, QString team_id){
     }
     connect(selectChannel, &QComboBox::activated, [this, ids, team_id](int index){
         QString channel_id = ids.value(index);
-        this->auth->getFilesFolder(team_id, channel_id, this->dockWidgetlayout);
+        this->auth->getFilesFolder(team_id, channel_id);
     });
+    connect(this->auth, &Authenticator::filesListReceived, this, &MainWindow::addFiles);
     connect(this->auth, &Authenticator::fileContentReceived, this, &MainWindow::displayFile);
+}
+
+void MainWindow::addFiles(QList<fileInfos> list_file_infos){
+    for (auto it = list_file_infos.begin(); it != list_file_infos.end(); ++it){
+        QPushButton * button = new QPushButton();
+        QString fname = it->file_name;
+        QString sid = it->site_id;
+        QString tid = it->item_id;
+        button->setText(it->file_name);
+        connect(button, &QPushButton::clicked, [this, sid, tid](){
+            qDebug() << sid;
+            qDebug() << tid;
+            this->auth->getFileContent(sid, tid);
+        });
+        this->dockWidgetlayout->addWidget(button);
+    }
 }
 
 void MainWindow::displayFile(QByteArray fileContent, QString site_id, QString item_id){
