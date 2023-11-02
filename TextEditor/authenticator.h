@@ -19,8 +19,9 @@ public:
     void getChannelsList(QString id);
     void getFilesFolder(QString team_id, QString channel_id);
     void getFilesFolderContent(QString drive_id, QString item_id);
-    void getFileContent(QString site_id, QString item_id);
-    void updateFileContent(QString site_id, QString item_id, QByteArray new_text);
+    void getFileContent(QString site_id, QString item_id, QString file_name, bool open);
+    void updateFileContent(QByteArray new_text, struct openFile * current_open_file);
+    void checkVersion(QString site_id, QString item_id, QString version);
 private:
     QOAuth2AuthorizationCodeFlow * microsoft;
     QOAuthOobReplyHandler * replyHandler;
@@ -29,8 +30,12 @@ signals:
     void channelsListReceived(QMap<QString, QString> channels, QString team_id);
     void getChannels(QString id);
     void loggedIn();
-    void fileContentReceived(QByteArray fileContent, QString site_id, QString item_id);
+    void fileContentReceived(QString file_name, QByteArray fileContent, QString site_id, QString item_id, QString version, bool open);
     void filesListReceived(QList<fileInfos> list_file_infos);
+    void versionChecked(bool res);
+    void openFile(QString fileName, QString site_id, QString item_id, QString version);
+private slots:
+    void saveFileLocal(QString fileName, QString fileContent, QString site_id, QString item_id, QString version, bool open);
 };
 
 #endif // AUTHENTICATOR_H

@@ -17,6 +17,7 @@ public:
     bool saveFile(const QString &fileName);
     QString userFriendlyCurrentFile();
     QString currentFile() { return curFile; }
+    QString getText();
 
 protected:
     void closeEvent(QCloseEvent *event) override;

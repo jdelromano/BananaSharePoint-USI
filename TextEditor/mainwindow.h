@@ -44,6 +44,7 @@ public:
     MainWindow();
 
     bool openFile(const QString &fileName);
+    struct openFile current_open_file;
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -88,7 +89,8 @@ private slots:
     void addTeams(QList<QPair<QString, QString>> list_id_name);
     void addChannels(QMap<QString, QString> channels, QString team_id);
     void addFiles(QList<fileInfos> list_file_infos);
-    void displayFile(QByteArray fileContent, QString site_id, QString item_id);
+    //void displayFile(QByteArray fileContent, QString site_id, QString item_id, QString version);
+    void openCurrentFile(QString fileName, QString site_id, QString item_id, QString version);
 };
 
 #endif
