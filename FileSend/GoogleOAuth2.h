@@ -30,3 +30,7 @@ private:
 };
 
 #endif // GOOGLEOAUTH2_H
+
+
+//Idea use a seperate class for testing, for e.g. GoogleOAuth2Test.cpp, this simulates the authentication process
+//If a successfull login is performed then emit a signal to confirm.

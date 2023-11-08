@@ -67,6 +67,26 @@ void MicrosoftOAuth2::onManagerFinished(QNetworkReply* reply) {
     // You can also emit signals here to indicate success or failure.
     // For example, emit authenticationSuccess() or authenticationError() signals.
     // Make sure to handle potential errors and parse the response accordingly.
+    if (reply->error()) {
+        qDebug() << "Error: " << reply->error();
+        emit authenticationError(reply->errorString());
+    } else {
+        QByteArray data = reply->readAll();
+        QString responseString = QString::fromUtf8(data);
+
+        // Parse the JSON response
+        QJsonDocument jsonResponse = QJsonDocument::fromJson(responseString.toUtf8());
+
+        if (jsonResponse.isObject()) {
+            QJsonObject jsonObject = jsonResponse.object();
+            if (jsonObject.contains("access_token") && jsonObject["access_token"].isString()) {
+                accessToken = jsonObject["access_token"].toString();
+                emit authenticationSuccess();
+            }
+        }
+    }
+
+    reply->deleteLater();
 }
 
 //  putRequest if neededfor AccessToken. (If needed only)
