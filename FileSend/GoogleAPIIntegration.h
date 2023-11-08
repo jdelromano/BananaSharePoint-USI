@@ -2,7 +2,7 @@
 #define GOOGLEAPIINTEGRATION_H
 
 #include <QObject>
-
+#include "OAuth2Base.h"
 // Include necessary headers for your project
 class GoogleAPIIntegration : public OAuth2Base {
     Q_OBJECT

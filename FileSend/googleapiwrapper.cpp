@@ -1,5 +1,5 @@
 #include "GoogleAPIIntegration.h"
-#include "googleapiwrapper.h"
+#include "googleapiwrapper.cpp"
 #include "QJsonDocument"
 #include "QJsonObject"
 #include "Google_secrets.h"

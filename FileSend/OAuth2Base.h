@@ -1,3 +1,9 @@
+#ifndef OAUTH2BASE_H
+#define OAUTH2BASE_H
+
+#include <QObject>
+#include <QtNetwork/QNetworkAccessManager>
+
 class OAuth2Base : public QObject {
     Q_OBJECT
 
@@ -26,5 +32,6 @@ protected:
 
 private slots:
                // Slot to handle network replies.
-
 };
+
+#endif // OAUTH2BASE_H

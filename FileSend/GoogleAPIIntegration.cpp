@@ -1,4 +1,3 @@
-
 #include "GoogleAPIIntegration.h"
 #include "QJsonDocument"
 #include "QJsonObject"
