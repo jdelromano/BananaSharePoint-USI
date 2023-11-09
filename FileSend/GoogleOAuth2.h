@@ -34,3 +34,5 @@ private:
 
 //Idea use a seperate class for testing, for e.g. GoogleOAuth2Test.cpp, this simulates the authentication process
 //If a successfull login is performed then emit a signal to confirm.
+// Use QVERIFY and QCompare for these tests
+//QVERIFY_EXCEPTION_THROWN(expression, exceptiontype) this macro executes expression and tries to catch an exception thrown from expression.
