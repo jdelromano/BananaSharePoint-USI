@@ -38,6 +38,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         Google_secrets.h
         MicrosoftOAuth2.cpp
         Microsoft_secrets.h
+        MicrosoftOAuth2Test.cpp
+        GoogleOAuth2Test.cpp
 
     )
 # Define target properties for Android with Qt 6 as:
