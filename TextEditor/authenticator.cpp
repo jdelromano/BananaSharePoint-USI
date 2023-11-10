@@ -9,7 +9,6 @@
 #include "QNetworkReply"
 #include "QIterator"
 #include "QList"
-#include "QSaveFile"
 #include "QDir"
 
 Authenticator::Authenticator(QObject *parent) : QObject{parent}{
@@ -75,7 +74,7 @@ Authenticator::Authenticator(QObject *parent) : QObject{parent}{
     connect(this->microsoft, &QOAuth2AuthorizationCodeFlow::granted, [this](){
         qDebug() << "token received";
         emit loggedIn();
-        //qDebug() << this->microsoft->token();
+        qDebug() << this->microsoft->token();
     });
 }
 
@@ -87,6 +86,10 @@ void Authenticator::getTeamsList(){
     QUrl url("https://graph.microsoft.com/v1.0/me/joinedTeams");
     QNetworkReply * reply =  this->microsoft->get(url);
     connect(reply, &QNetworkReply::finished, [this, reply](){
+        if (reply->error()){
+            qDebug() << reply->errorString();
+            return;
+        }
         QJsonObject reply_obj  = (QJsonDocument::fromJson(reply->readAll())).object();
         QJsonArray values = reply_obj["value"].toArray();
         qDebug() << "MY teams:";
@@ -107,6 +110,10 @@ void Authenticator::getChannelsList(QString team_id){
     QUrl url("https://graph.microsoft.com/v1.0/teams/" + team_id + "/channels");
     QNetworkReply * reply =  this->microsoft->get(url);
     connect(reply, &QNetworkReply::finished, [this, reply, team_id](){
+        if (reply->error()){
+            qDebug() << reply->errorString();
+            return;
+        }
         QJsonObject reply_obj  = (QJsonDocument::fromJson(reply->readAll())).object();
         QJsonArray values = reply_obj["value"].toArray();
         qDebug() << "Team channels:";
@@ -127,6 +134,10 @@ void Authenticator::getFilesFolder(QString team_id, QString channel_id){
              + "/channels/" + channel_id + "/filesFolder?");
     QNetworkReply * reply =  this->microsoft->get(url);
     connect(reply, &QNetworkReply::finished, [this, reply](){
+        if (reply->error()){
+            qDebug() << reply->errorString();
+            return;
+        }
         QJsonObject reply_obj  = (QJsonDocument::fromJson(reply->readAll())).object();
         QString item_id = reply_obj["id"].toString();
         QJsonObject obj = (reply_obj["parentReference"]).toObject();
@@ -141,6 +152,10 @@ void Authenticator::getFilesFolderContent(QString drive_id, QString item_id){
              + "/items/" + item_id + "/children");
     QNetworkReply * reply =  this->microsoft->get(url);
     connect(reply, &QNetworkReply::finished, [this, reply](){
+        if (reply->error()){
+            qDebug() << reply->errorString();
+            return;
+        }
         QJsonObject reply_obj  = (QJsonDocument::fromJson(reply->readAll())).object();
         QJsonArray values = reply_obj["value"].toArray();
         qDebug() << "My files:";
@@ -188,6 +203,10 @@ void Authenticator::getFileContent(QString site_id, QString item_id, QString fil
              +"/drive/items/"+ item_id + "/content");
     QNetworkReply * reply =  this->microsoft->get(url);
     connect(reply, &QNetworkReply::finished, [this, reply, site_id, item_id, file_name, open](){
+        if (reply->error()){
+            qDebug() << reply->errorString();
+            return;
+        }
         qDebug() << "Getting file content";
         QByteArray fileContent = reply->readAll();
         //qDebug() << fileContent;
@@ -195,6 +214,10 @@ void Authenticator::getFileContent(QString site_id, QString item_id, QString fil
                   +"/drive/items/"+ item_id + "/versions/current");
         QNetworkReply * reply2 =  this->microsoft->get(url2);
         connect(reply2, &QNetworkReply::finished, [this, fileContent, reply2, site_id, item_id, file_name, open](){
+            if (reply2->error()){
+                qDebug() << reply2->errorString();
+                return;
+            }
             QJsonObject reply_obj  = (QJsonDocument::fromJson(reply2->readAll())).object();
             QString version = reply_obj["id"].toString();
             qDebug() << "file version: " << version;
@@ -211,6 +234,10 @@ void Authenticator::updateFileContent(QByteArray new_text, struct openFile * cur
              + "/drive/items/" + item_id + "/content");
     QNetworkReply * reply =  this->microsoft->put(url, new_text);
     connect(reply, &QNetworkReply::finished, [reply](){
+        if (reply->error()){
+            qDebug() << reply->errorString();
+            return;
+        }
         qDebug() << "updated text sent";
     });
 }
@@ -220,6 +247,10 @@ void Authenticator::checkVersion(QString site_id, QString item_id, QString versi
               +"/drive/items/"+ item_id + "/versions/current");
     QNetworkReply * reply =  this->microsoft->get(url);
     connect(reply, &QNetworkReply::finished, [this, reply, version](){
+        if (reply->error()){
+            qDebug() << reply->errorString();
+            return;
+        }
         QJsonObject reply_obj  = (QJsonDocument::fromJson(reply->readAll())).object();
         QString new_version = reply_obj["id"].toString();
         qDebug() << "my version:";
@@ -272,7 +303,7 @@ void Authenticator::saveFileLocal(QString fileName, QString fileContent, QString
                                     {"version", version}};
 
         files_infos_array.push_back(fileDetails);
-        QSaveFile file(file_path);
+        QFile file(file_path);
         if (file.open(QFile::WriteOnly | QFile::Text)) {
             QTextStream out(&file);
             out << fileContent;

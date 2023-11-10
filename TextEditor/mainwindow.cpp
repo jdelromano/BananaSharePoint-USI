@@ -477,6 +477,19 @@ void MainWindow::switchLayoutDirection()
 
 void MainWindow::startLoginProcess()
 {
+    if (!QFile::exists("../../../files")){
+        QDir().mkdir("../../../files");
+    }
+    if (!QFile::exists("../../../files/files_params.json")){
+        QFile new_json_file("../../../files/files_params.json");
+        if (new_json_file.open(QFile::WriteOnly | QFile::Text)) {
+            QTextStream out(&new_json_file);
+            out << "[]";
+        }
+        else {
+            qDebug() << "Cannot open file";
+        }
+    }
     qDebug() << "start login";
     this->auth = new Authenticator(this);
     connect(this->auth, &Authenticator::loggedIn, this, &MainWindow::onLoggedIn);
