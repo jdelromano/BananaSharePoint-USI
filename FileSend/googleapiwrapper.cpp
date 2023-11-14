@@ -13,12 +13,12 @@ GoogleAPIWrapper::GoogleAPIWrapper(QObject *parent) : QObject(parent)
 
 
 
-    const QUrl authUri=Google_secrets::auth_uri;
-    const QString clientId =Google_secrets::client_id;
-    const QUrl tokenUri= Google_secrets::token_uri;
-    const QString clientSecret = Google_secrets::client_secret;
-    const QUrl redirectUri= Google_secrets::redirect_uris;
-    const auto port = Google_secrets::port; // Get the port
+    const QUrl authUri=Secrets::auth_uri;
+    const QString clientId =Secrets::client_id;
+    const QUrl tokenUri= Secrets::token_uri;
+    const QString clientSecret = Secrets::client_secret;
+    const QUrl redirectUri= Secrets::redirect_uris;
+    const auto port = Secrets::port; // Get the port
 
     this->google->setAuthorizationUrl(authUri);
     this->google->setClientIdentifier(clientId);

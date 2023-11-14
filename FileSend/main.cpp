@@ -1,43 +1,29 @@
-#include <QApplication>
-#include "googleoauth2.h"
-#include "microsoftoauth2.h"
-#include "GoogleAPIIntegration.h"
+#include "main.h"
+#include "OAuth2Base.h"
 
-int main(int argc, char *argv[]) {
-    QApplication a(argc, argv);
+MainApplication::MainApplication(int &argc, char **argv) : QApplication(argc, argv) {
+    // Create instances of authenticators
+    MicrosoftOAuth2 microsoftAuthenticator;
+//    GoogleOAuth2 googleAuthenticator;
 
-    GoogleOAuth2 googleAuth;
-    MicrosoftOAuth2 microsoftAuth;
-    GoogleAPIIntegration googleIntegration; // Create an instance of GoogleAPIIntegration
+    // Connect signals to slots for authentication completion
+    connect(&microsoftAuthenticator, &MicrosoftOAuth2::loggedIn, this, &MainApplication::microsoftAuthenticationComplete);
+//    connect(&googleAuthenticator, &GoogleOAuth2::gotToken, this, &MainApplication::googleAuthenticationComplete);
 
-    // Set OAuth2 configuration parameters for Google and Microsoft.
-    googleAuth.setClientId("your_google_client_id");
-    googleAuth.setClientSecret("your_google_client_secret");
-    googleAuth.setRedirectUri("your_google_redirect_uri");
+    // Initiate authentication for both Microsoft and Google
+    microsoftAuthenticator.authenticate();
+//    googleAuthenticator.authenticate();
+}
 
-    microsoftAuth.setClientId("your_microsoft_client_id");
-    microsoftAuth.setClientSecret("your_microsoft_client_secret");
-    microsoftAuth.setRedirectUri("your_microsoft_redirect_uri");
+void MainApplication::microsoftAuthenticationComplete() {
+    qDebug() << "Microsoft authentication complete!";
+}
 
-    // Connect signals for authentication success and error.
-    QObject::connect(&googleAuth, &OAuth2Base::authenticationSuccess, [&googleIntegration]() {
-        // Handle Google authentication success using GoogleAPIIntegration.
-        googleIntegration.getUserEmail(); // For example, call a method in GoogleAPIIntegration.
-    });
-    QObject::connect(&googleAuth, &OAuth2Base::authenticationError, [](const QString& error) {
-        // Handle Google authentication error.
-    });
+void MainApplication::googleAuthenticationComplete() {
+    qDebug() << "Google authentication complete!";
+}
 
-    QObject::connect(&microsoftAuth, &OAuth2Base::authenticationSuccess, []() {
-        // Handle Microsoft authentication success.
-    });
-    QObject::connect(&microsoftAuth, &OAuth2Base::authenticationError, [](const QString& error) {
-        // Handle Microsoft authentication error.
-    });
-
-    // Start the authentication process.
-    googleAuth.authenticate();
-    microsoftAuth.authenticate();
-
-    return a.exec();
+int main(int argc, char **argv) {
+    MainApplication app(argc, argv);
+    return app.exec();
 }

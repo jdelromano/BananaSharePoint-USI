@@ -1,21 +1,20 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include <QMainWindow>
+#include <QApplication>
+#include <QDebug>
+#include "MicrosoftOAuth2.h"
+#include "GoogleOAuth2.h"
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class Main; }
-QT_END_NAMESPACE
-
-class Main : public QMainWindow
-{
+class MainApplication : public QApplication {
     Q_OBJECT
 
 public:
-    Main(QWidget *parent = nullptr);
-    ~Main();
+    MainApplication(int &argc, char **argv);
 
-private:
-    Ui::Main *ui;
+private slots:
+    void microsoftAuthenticationComplete();
+    void googleAuthenticationComplete();
 };
+
 #endif // MAIN_H
