@@ -4,5 +4,5 @@ build*
 .DS_Store
 *CMakeLists.txt.user
 
-*.vs*
+*.vs
 *CMakePresets_user.json
