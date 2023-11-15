@@ -70,11 +70,11 @@ Authenticator::Authenticator(QObject *parent) : QObject{parent}{
     */
     connect(this->microsoft, &QOAuth2AuthorizationCodeFlow::authorizeWithBrowser, &QDesktopServices::openUrl);
 
-    connect(this->microsoft, &QOAuth2AuthorizationCodeFlow::granted, [this](){
+    connect(this->microsoft, &QOAuth2AuthorizationCodeFlow::granted, [this]() {
         qDebug() << "token received";
         emit loggedIn();
-        //qDebug() << this->microsoft->token();
-        //this->getTeamsList();
+        // qDebug() << this->microsoft->token();
+        // this->getTeamsList();
     });
 }
 

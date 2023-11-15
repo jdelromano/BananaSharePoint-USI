@@ -99,3 +99,4 @@ if(MSVC)
     message(STATUS  "configuring file launch with ${c_qt_dir}")
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/launch.vs.json.in ${CMAKE_SOURCE_DIR}/.vs/launch.vs.json @ONLY LF)
 endif()
+
