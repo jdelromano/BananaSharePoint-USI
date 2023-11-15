@@ -1,4 +1,5 @@
-#include "authenticator.h"
+#include "MicrosoftOAuth2.h"
+#include "Microsoft_secrets.h"
 #include "mainwindow.h"
 #include "qdesktopservices.h"
 #include "qoauthhttpserverreplyhandler.h"
@@ -10,35 +11,28 @@
 #include "QIterator"
 #include "QList"
 
-Authenticator::Authenticator(QObject *parent) : QObject{parent}{
+//Changing Authenticator to MicrosoftOAuth2.cpp
+MicrosoftOAuth2::MicrosoftOAuth2(QObject* parent) : OAuth2Base(parent)
+{
 
     this->microsoft = new QOAuth2AuthorizationCodeFlow(this);
 
-    QFile file("../../../auth_params.json");
-    //qDebug() << "exists? " << QFile::exists("../../../auth_params.json");
-    QJsonDocument document;
-    file.open(QIODeviceBase::ReadOnly);
-    if(file.isOpen())
-    {
-        QByteArray json_bytes = file.readAll();
-        document = QJsonDocument::fromJson(json_bytes);
-        file.close();
-    }
+    this->microsoft = new QOAuth2AuthorizationCodeFlow(this);
 
-    //Parse json to get authorization parameters
-    QJsonObject obj = document.object();
-    QUrl authUri = obj["auth_uri"].toString();
-    QString clientId = obj["client_id"].toString();
-    QUrl tokenUri = obj["token_uri"].toString();
-    QUrl redirectUri = obj["redirect_uri"].toString();
-    quint16 port = static_cast<quint16>(redirectUri.port()); // Get the port
+    // Parse json to get authorization parameters
+    QUrl authUri = Microsoft_secrets::auth_uri;
+    QString clientId = Microsoft_secrets::client_id;
+    QUrl tokenUri = Microsoft_secrets::token_uri;
+    QUrl redirectUri = Microsoft_secrets::redirect_uris;
+    quint16 port = Microsoft_secrets::port; // Get the port
 
-    //required values for authorization code request
+    // required values for authorization code request
     this->microsoft->setClientIdentifier(clientId);
-    this->microsoft->setScope("User.Read Team.ReadBasic.All Channel.ReadBasic.All Files.ReadWrite.All");
+    this->microsoft->setScope(
+            "User.Read Team.ReadBasic.All Channel.ReadBasic.All Files.ReadWrite.All");
     this->microsoft->setAuthorizationUrl(authUri);
 
-    //additional required values for access token request
+    // additional required values for access token request
     this->microsoft->setAccessTokenUrl(tokenUri);
 
     /*
@@ -78,11 +72,13 @@ Authenticator::Authenticator(QObject *parent) : QObject{parent}{
     });
 }
 
-void Authenticator::startLogin(){
+void MicrosoftOAuth2::startLogin()
+{
     this->microsoft->grant();
 }
 
-void Authenticator::getTeamsList(){
+void MicrosoftOAuth2::getTeamsList()
+{
     QUrl url("https://graph.microsoft.com/v1.0/me/joinedTeams");
     QNetworkReply * reply =  this->microsoft->get(url);
     connect(reply, &QNetworkReply::finished, [this, reply](){
@@ -102,7 +98,8 @@ void Authenticator::getTeamsList(){
     });
 }
 
-void Authenticator::getChannelsList(QString team_id){
+void MicrosoftOAuth2::getChannelsList(QString team_id)
+{
     QUrl url("https://graph.microsoft.com/v1.0/teams/" + team_id + "/channels");
     QNetworkReply * reply =  this->microsoft->get(url);
     connect(reply, &QNetworkReply::finished, [this, reply, team_id](){
@@ -121,7 +118,8 @@ void Authenticator::getChannelsList(QString team_id){
     });
 }
 
-void Authenticator::getFilesFolder(QString team_id, QString channel_id){
+void MicrosoftOAuth2::getFilesFolder(QString team_id, QString channel_id)
+{
     QUrl url("https://graph.microsoft.com/v1.0/teams/" + team_id
              + "/channels/" + channel_id + "/filesFolder?");
     QNetworkReply * reply =  this->microsoft->get(url);
@@ -134,7 +132,8 @@ void Authenticator::getFilesFolder(QString team_id, QString channel_id){
     });
 }
 
-void Authenticator::getFilesFolderContent(QString drive_id, QString item_id){
+void MicrosoftOAuth2::getFilesFolderContent(QString drive_id, QString item_id)
+{
     QUrl url("https://graph.microsoft.com/v1.0/drives/" + drive_id
              + "/items/" + item_id + "/children");
     QNetworkReply * reply =  this->microsoft->get(url);
@@ -156,7 +155,8 @@ void Authenticator::getFilesFolderContent(QString drive_id, QString item_id){
     });
 }
 
-void Authenticator::getFileContent(QString site_id, QString item_id){
+void MicrosoftOAuth2::getFileContent(QString site_id, QString item_id)
+{
     qDebug() << "here";
     QUrl url("https://graph.microsoft.com/v1.0/sites/" + site_id
              +"/drive/items/"+ item_id + "/content");
@@ -170,7 +170,8 @@ void Authenticator::getFileContent(QString site_id, QString item_id){
     });
 }
 
-void Authenticator::updateFileContent(QString site_id, QString item_id, QByteArray new_text){
+void MicrosoftOAuth2::updateFileContent(QString site_id, QString item_id, QByteArray new_text)
+{
     QUrl url("https://graph.microsoft.com/v1.0/sites/" + site_id
              + "/drive/items/" + item_id + "/content");
     QNetworkReply * reply =  this->microsoft->put(url, new_text);

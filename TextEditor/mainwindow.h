@@ -5,7 +5,7 @@
 #include <QEvent>
 #include "QBoxLayout"
 #include "helperstructures.h"
-#include "authenticator.h"
+#include "MicrosoftOAuth2.h"
 
 class MdiChild;
 QT_BEGIN_NAMESPACE
@@ -77,13 +77,14 @@ private:
     MdiChild *activeMdiChild() const;
     QMdiSubWindow *findMdiChild(const QString &fileName) const;
     QAction* loginAct;
-    Authenticator * auth;
+    MicrosoftOAuth2 * auth;
     QDockWidget * dockWidget;
     QVBoxLayout* dockWidgetlayout;
     QAction * saveOnline;
 
 private slots:
-    void startLoginProcess();
+    void startMicrosoftLoginProcess();
+    void startGoogleLoginProcess();
     void onLoggedIn();
     void addTeams(QList<QPair<QString, QString>> list_id_name);
     void addChannels(QMap<QString, QString> channels, QString team_id);

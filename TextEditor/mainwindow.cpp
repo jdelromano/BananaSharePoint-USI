@@ -304,9 +304,13 @@ void MainWindow::createActions()
     fileMenu->addAction(saveAsAct);
 
     //Convenience button to start the login process
-    loginAct = new QAction("do login");
+    loginAct = new QAction("Microsoft login");
     fileToolBar->addAction(loginAct);
-    connect(loginAct, &QAction::triggered, this, &MainWindow::startLoginProcess);
+    connect(loginAct, &QAction::triggered, this, &MainWindow::startMicrosoftLoginProcess);
+
+    loginAct = new QAction("Google login");
+    fileToolBar->addAction(loginAct);
+    connect(loginAct, &QAction::triggered, this, &MainWindow::startGoogleLoginProcess);
 
     saveOnline = new QAction("Save online", this);
     saveOnline->setStatusTip(tr("Save the document online"));
@@ -471,12 +475,20 @@ void MainWindow::switchLayoutDirection()
         QGuiApplication::setLayoutDirection(Qt::LeftToRight);
 }
 
-void MainWindow::startLoginProcess()
+void MainWindow::startMicrosoftLoginProcess()
 {
-    qDebug() << "start login";
-    this->auth = new Authenticator(this);
-    connect(this->auth, &Authenticator::loggedIn, this, &MainWindow::onLoggedIn);
+    qDebug() << "start Microsoft login";
+    this->auth = new MicrosoftOAuth2(this);
+    connect(this->auth, &MicrosoftOAuth2::loggedIn, this, &MainWindow::onLoggedIn);
     this->auth->startLogin();
+}
+
+void MainWindow::startGoogleLoginProcess()
+{
+    qDebug() << "start Google login";
+//    this->auth = new Authenticator(this);
+//    connect(this->auth, &Authenticator::loggedIn, this, &MainWindow::onLoggedIn);
+//    this->auth->startLogin();
 }
 
 void MainWindow::onLoggedIn()
@@ -490,7 +502,7 @@ void MainWindow::onLoggedIn()
     dockWidgetlayout->setAlignment(Qt::AlignTop);
     multiWidget->setLayout(dockWidgetlayout);
     dockWidget->setWidget(multiWidget);
-    connect(this->auth, &Authenticator::teamsListReceived, this, &MainWindow::addTeams);
+    connect(this->auth, &MicrosoftOAuth2::teamsListReceived, this, &MainWindow::addTeams);
     this->auth->getTeamsList();
 }
 
@@ -508,7 +520,7 @@ void MainWindow::addTeams(QList<QPair<QString, QString>> list_id_name){
         qDebug() << "clicked item with index: " << index << " and id: " << team_id;
         this->auth->getChannelsList(team_id);
     });
-    connect(this->auth, &Authenticator::channelsListReceived, this, &MainWindow::addChannels);
+    connect(this->auth, &MicrosoftOAuth2::channelsListReceived, this, &MainWindow::addChannels);
 }
 
 void MainWindow::addChannels(QMap<QString, QString> channels, QString team_id){
@@ -528,8 +540,8 @@ void MainWindow::addChannels(QMap<QString, QString> channels, QString team_id){
         QString channel_id = ids.value(index);
         this->auth->getFilesFolder(team_id, channel_id);
     });
-    connect(this->auth, &Authenticator::filesListReceived, this, &MainWindow::addFiles);
-    connect(this->auth, &Authenticator::fileContentReceived, this, &MainWindow::displayFile);
+    connect(this->auth, &MicrosoftOAuth2::filesListReceived, this, &MainWindow::addFiles);
+    connect(this->auth, &MicrosoftOAuth2::fileContentReceived, this, &MainWindow::displayFile);
 }
 
 void MainWindow::addFiles(QList<fileInfos> list_file_infos){

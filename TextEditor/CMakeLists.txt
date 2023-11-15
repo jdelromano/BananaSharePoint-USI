@@ -46,7 +46,7 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
     mainwindow.cpp mainwindow.h
     mdichild.cpp mdichild.h
     MANUAL_FINALIZATION
-    authenticator.h authenticator.cpp
+    MicrosoftOAuth2.h MicrosoftOAuth2.cpp
     helperstructures.h
 )
 

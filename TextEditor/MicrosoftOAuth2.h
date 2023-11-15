@@ -1,19 +1,24 @@
-#ifndef AUTHENTICATOR_H
-#define AUTHENTICATOR_H
+// MicrosoftOAuth2.h
+#ifndef MICROSOFTOAUTH2_H
+#define MICROSOFTOAUTH2_H
 
 #include <QObject>
+#include "OAuth2Base.h"
 #include "qoauth2authorizationcodeflow.h"
 #include "qoauthhttpserverreplyhandler.h"
 #include "helperstructures.h"
 #include "QComboBox"
 #include "QVBoxLayout"
 
-class Authenticator : public QObject
+class MicrosoftOAuth2 : public OAuth2Base
 {
     Q_OBJECT
 
 public:
-    explicit Authenticator(QObject *parent = nullptr);
+    explicit MicrosoftOAuth2(QObject *parent = nullptr);
+    ~MicrosoftOAuth2();
+    //void authenticate() override;
+    //void handleCallback(const QUrl &callbackUrl) override;
     void startLogin();
     void getTeamsList();
     void getChannelsList(QString id);
@@ -33,4 +38,4 @@ signals:
     void filesListReceived(QList<fileInfos> list_file_infos);
 };
 
-#endif // AUTHENTICATOR_H
+#endif // MICROSOFTOAUTH2_H
