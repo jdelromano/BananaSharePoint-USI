@@ -312,9 +312,11 @@ void MainWindow::createActions()
     saveOnline->setStatusTip(tr("Save the document online"));
     fileToolBar->addAction(saveOnline);
     connect(saveOnline, &QAction::triggered, [this](){
-        QString new_text = activeMdiChild()->getText();
-        this->auth->updateFileContent(new_text.toUtf8(), &(this->current_open_file));
+        this->auth->checkVersion(this->current_open_file.site_id,
+                                 this->current_open_file.item_id,
+                                 this->current_open_file.version);
     });
+
 
     fileMenu->addSeparator();
 
@@ -508,6 +510,7 @@ void MainWindow::onLoggedIn()
     multiWidget->setLayout(dockWidgetlayout);
     dockWidget->setWidget(multiWidget);
     connect(this->auth, &Authenticator::teamsListReceived, this, &MainWindow::addTeams);
+    connect(this->auth, &Authenticator::versionChecked, this, &MainWindow::sendFile);
     this->auth->getTeamsList();
 }
 
@@ -546,7 +549,6 @@ void MainWindow::addChannels(QMap<QString, QString> channels, QString team_id){
         this->auth->getFilesFolder(team_id, channel_id);
     });
     connect(this->auth, &Authenticator::filesListReceived, this, &MainWindow::addFiles);
-    //connect(this->auth, &Authenticator::fileContentReceived, this, &MainWindow::displayFile);
 }
 
 void MainWindow::addFiles(QList<fileInfos> list_file_infos){
@@ -558,8 +560,6 @@ void MainWindow::addFiles(QList<fileInfos> list_file_infos){
         QString tid = it->item_id;
         button->setText(it->file_name);
         connect(button, &QPushButton::clicked, [this, sid, tid, fname](){
-//            qDebug() << sid;
-//            qDebug() << tid;
             this->auth->getFileContent(sid, tid, fname, true);
         });
         this->dockWidgetlayout->addWidget(button);
@@ -572,28 +572,18 @@ void MainWindow::openCurrentFile(QString fileName, QString site_id, QString item
     this->openFile(file_path);
 }
 
-//UNUSED
-//void MainWindow::displayFile(QByteArray fileContent, QString site_id, QString item_id, QString version){
-//    QTextEdit * text_edit = new QTextEdit(this);
-//    text_edit->insertPlainText(fileContent);
-//    mdiArea->addSubWindow(text_edit);
-//    text_edit->show();
-//    connect(this->auth, &Authenticator::versionChecked, this, [this, text_edit, site_id, item_id](bool res){
-//        if (res){
-//            qDebug() << "versions are equal";
-//            QByteArray new_text = (text_edit->toPlainText()).toUtf8();
-//            this->auth->updateFileContent(site_id, item_id, new_text);
-//        }
-//        else{
-//            //display message: file was already modified
-//            QMessageBox::warning(
-//                    this,
-//                    tr("Text Editor"),
-//                    tr("This file has been modified"));
-//        }
-//    });
-//    connect(this->saveOnline, &QAction::triggered, [text_edit, this, site_id, item_id, version](){
-//        this->auth->checkVersion(site_id, item_id, version);
-//    });
-//}
+
+void MainWindow::sendFile(bool res){
+    if (res){
+        QString new_text = activeMdiChild()->getText();
+        this->auth->updateFileContent(new_text.toUtf8(), &(this->current_open_file));
+    }
+    else{
+        //display message: file was already modified
+        QMessageBox::warning(
+                this,
+                tr("Text Editor"),
+                tr("This file has been modified"));
+    }
+}
 
