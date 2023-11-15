@@ -1,0 +1,16 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "exe",
+      "project": "CMakeLists.txt",
+      "name": "@PROJECT_NAME@ with Qt6 %PATH%",
+      "args": [],
+      "env": {
+        "PATH": "@c_qt_dir@;${env.PATH}"
+      }
+    }
+  ]
+  
+}
