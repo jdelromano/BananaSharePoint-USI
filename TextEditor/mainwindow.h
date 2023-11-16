@@ -45,7 +45,9 @@ public:
 
     bool openFile(const QString &fileName);
     void sendFile(bool res);
+    void startLoginProcess();
     struct openFile current_open_file;
+    bool teams;
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -79,14 +81,13 @@ private:
     MdiChild *activeMdiChild() const;
     QMdiSubWindow *findMdiChild(const QString &fileName) const;
     QAction* loginAct;
+    QAction* loginAct2;
     AbstractAuthenticator * auth;
     QDockWidget * dockWidget;
     QVBoxLayout* dockWidgetlayout;
     QAction * saveOnline;
 
 private slots:
-    void startLoginProcess();
-    void startLoginProcess2();
     void onLoggedIn();
     void addTeams(QList<QPair<QString, QString>> list_id_name);
     void addChannels(QMap<QString, QString> channels, QString team_id);

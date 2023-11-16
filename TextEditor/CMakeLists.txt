@@ -50,6 +50,7 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
     helperstructures.h
     abstractauthenticator.h
     authenticatorgoogle.h authenticatorgoogle.cpp
+    abstractauthenticator.cpp
 )
 
 #############################################################################################

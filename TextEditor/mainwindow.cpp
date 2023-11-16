@@ -307,11 +307,21 @@ void MainWindow::createActions()
     //Convenience button to start the login process
     loginAct = new QAction("teams login");
     fileToolBar->addAction(loginAct);
-    connect(loginAct, &QAction::triggered, this, &MainWindow::startLoginProcess);
+    connect(loginAct, &QAction::triggered, [this](){
+        loginAct->setDisabled(true);
+        loginAct2->setDisabled(true);
+        this->teams = true;
+        this->startLoginProcess();
+    });
 
-    QAction * loginAct2 = new QAction("docs login");
+    loginAct2 = new QAction("docs login");
     fileToolBar->addAction(loginAct2);
-    connect(loginAct2, &QAction::triggered, this, &MainWindow::startLoginProcess2);
+    connect(loginAct2, &QAction::triggered, [this](){
+        loginAct->setDisabled(true);
+        loginAct2->setDisabled(true);
+        this->teams = false;
+        this->startLoginProcess();
+    });
 
     saveOnline = new QAction("Save online", this);
     saveOnline->setStatusTip(tr("Save the document online"));
@@ -489,7 +499,13 @@ void MainWindow::switchLayoutDirection()
 void MainWindow::startLoginProcess()
 {
     QString current_path = QCoreApplication::applicationDirPath();
-    QString params_path = current_path + "/../../TextEditor/params.json";
+    QString params_path;
+    if(this->teams){
+        params_path = current_path + "/../../TextEditor/params.json";
+    }
+    else{
+        params_path = current_path + "/../../TextEditor/params_google.json";
+    }
     QFile file(params_path);
     QJsonDocument document;
     file.open(QIODeviceBase::ReadOnly);
@@ -515,42 +531,12 @@ void MainWindow::startLoginProcess()
         }
     }
     qDebug() << "start login";
-    this->auth = new Authenticator(this, false);
-    connect(this->auth, &AbstractAuthenticator::loggedIn, this, &MainWindow::onLoggedIn);
-    this->auth->startLogin();
-    this->auth->files_path = filesPath;
-}
-
-void MainWindow::startLoginProcess2()
-{
-    QString current_path = QCoreApplication::applicationDirPath();
-    QString params_path = current_path + "/../../TextEditor/params_google.json";
-    QFile file(params_path);
-    QJsonDocument document;
-    file.open(QIODeviceBase::ReadOnly);
-    if(file.isOpen()){
-        QByteArray json_bytes = file.readAll();
-        document = QJsonDocument::fromJson(json_bytes);
-        file.close();
+    if (this->teams){
+        this->auth = new Authenticator(this, false);
     }
-    QJsonObject obj = document.object();
-    QString filesPath = current_path + obj["files_path"].toString();
-    QString filesJsonPath = filesPath + "/files_params.json";
-    if (!QFile::exists(filesPath)){
-        QDir().mkdir(filesPath);
+    else{
+        this->auth = new AuthenticatorGoogle(this, true);
     }
-    if (!QFile::exists(filesJsonPath)){
-        QFile new_json_file(filesJsonPath);
-        if (new_json_file.open(QFile::WriteOnly | QFile::Text)) {
-            QTextStream out(&new_json_file);
-            out << "[]";
-        }
-        else {
-            qDebug() << "Cannot open file";
-        }
-    }
-    qDebug() << "start login";
-    this->auth = new AuthenticatorGoogle(this, true);
     connect(this->auth, &AbstractAuthenticator::loggedIn, this, &MainWindow::onLoggedIn);
     this->auth->startLogin();
     this->auth->files_path = filesPath;
@@ -561,8 +547,12 @@ void MainWindow::startLoginProcess2()
  */
 void MainWindow::onLoggedIn()
 {
-    loginAct->setText("You are in");
-    //add right widget to access teams
+    if (this->teams){
+        loginAct->setText("You are in");
+    }
+    else{
+        loginAct2->setText("You are in");
+    }
     this->dockWidget = new QDockWidget(tr("Dock Widget"), this);
     addDockWidget(Qt::RightDockWidgetArea, dockWidget);
     QWidget* multiWidget = new QWidget();

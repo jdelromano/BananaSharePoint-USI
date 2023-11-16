@@ -10,13 +10,18 @@
 #include "QList"
 #include "QDir"
 
+/*!
+ * \brief AuthenticatorGoogle::AuthenticatorGoogle constructor for google authenticator
+ * \param parent parent object
+ * \param secret boolean value which tells if the authentication needs a secret value, in this case is true
+ */
 AuthenticatorGoogle::AuthenticatorGoogle(QObject *parent, bool secret) : AbstractAuthenticator(parent, secret){}
 
 /*!
  * \brief Authenticator::getTeamsList retrieves the list of teams the user is a part of
  */
 void AuthenticatorGoogle::getTeamsList(){
-    connect(this, &AbstractAuthenticator::fileContentReceived, this, &AuthenticatorGoogle::saveFileLocal);
+    connect(this, &AbstractAuthenticator::fileContentReceived, this, &AbstractAuthenticator::saveFileLocal);
     auto reply = this->microsoft->get(QUrl("https://www.googleapis.com/drive/v3/files"));
     connect(reply, &QNetworkReply::finished, [reply, this]() {
         QList<fileInfos> list_file_infos;
@@ -77,74 +82,4 @@ void AuthenticatorGoogle::updateFileContent(QByteArray new_text, struct openFile
  */
 void AuthenticatorGoogle::checkVersion(QString site_id, QString item_id, QString version){
     emit versionChecked(true);
-}
-
-/*!
- * \brief Authenticator::saveFileLocal saves a file locally. Updates the file content, if the file already exists, otherwise it
- * creates a new file. Also updates the file informations: id, name and version (or adds a new object with the file informations
- * in case it is a newly added file)
- * \param fileName the name of the file
- * \param fileContent the content of the file version found online
- * \param site_id the site id for the file
- * \param item_id the item id (file id)
- * \param version the version of the file currently online
- * \param open boolean value which says if the file has to be opened in the text editor or not
- */
-void AuthenticatorGoogle::saveFileLocal(QString fileName, QString fileContent, QString site_id, QString item_id, QString version, bool open){
-    QString filesJsonPath = this->files_path + "/files_params.json";
-    QFile files_infos(filesJsonPath);
-    if( !files_infos.open(QIODevice::ReadOnly)){
-        return;
-    }
-    QJsonDocument files_infos_json = QJsonDocument::fromJson(files_infos.readAll());
-    files_infos.close();
-    QJsonArray files_infos_array = files_infos_json.array();
-    QString file_path = this->files_path + "/" + fileName;
-    bool file_exists = QFile::exists(file_path);
-    if (file_exists){ //update
-        QFile file(file_path);
-        QJsonDocument document;
-        file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
-        if(file.isOpen())
-        {
-            file.write(fileContent.toLocal8Bit().data());
-            file.close();
-        }
-        bool json_updated = false;
-        int index = 0;
-        while(!json_updated && index < files_infos_array.size()){
-            QJsonObject jobj = files_infos_array.at(index).toObject();
-            if ((jobj["id"].toString()).compare(item_id) == 0){
-                json_updated = true;
-                jobj["version"] = version;
-                files_infos_array.replace(index, jobj);
-            }
-            ++index;
-        }
-    }
-    else{ //create new
-        QJsonObject fileDetails = { {"id", item_id},
-                                    {"name", fileName},
-                                    {"version", version}};
-
-        files_infos_array.push_back(fileDetails);
-        QFile file(file_path);
-        if (file.open(QFile::WriteOnly | QFile::Text)) {
-            QTextStream out(&file);
-            out << fileContent;
-        } else {
-            qDebug() << "Cannot open file";
-        }
-    }
-
-    if(!files_infos.open(QIODevice::WriteOnly)){
-        return;
-    }
-    //qDebug() << files_infos_array;
-    QJsonDocument doc(files_infos_array);
-    files_infos.write(doc.toJson());
-    files_infos.close();
-    if (open){
-        emit openFile(fileName, site_id, item_id, version);
-    }
 }

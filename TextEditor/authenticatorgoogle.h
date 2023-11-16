@@ -16,9 +16,6 @@ public:
     void getFileContent(QString site_id, QString item_id, QString file_name, bool open);
     void updateFileContent(QByteArray new_text, struct openFile * current_open_file);
     void checkVersion(QString site_id, QString item_id, QString version);
-private slots:
-    void saveFileLocal(QString fileName, QString fileContent, QString site_id, QString item_id, QString version, bool open);
-
 };
 
 #endif // AUTHENTICATORGOOGLE_H
