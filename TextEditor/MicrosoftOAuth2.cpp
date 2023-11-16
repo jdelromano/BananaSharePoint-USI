@@ -64,6 +64,16 @@ MicrosoftOAuth2::MicrosoftOAuth2(QObject* parent) : OAuth2Base(parent)
     */
     connect(this->microsoft, &QOAuth2AuthorizationCodeFlow::authorizeWithBrowser, &QDesktopServices::openUrl);
 
+    handleCallback();
+}
+
+void MicrosoftOAuth2::authenticate()
+{
+    this->microsoft->grant();
+}
+
+void MicrosoftOAuth2::handleCallback()
+{ 
     connect(this->microsoft, &QOAuth2AuthorizationCodeFlow::granted, [this]() {
         qDebug() << "token received";
         emit loggedIn();
@@ -72,13 +82,8 @@ MicrosoftOAuth2::MicrosoftOAuth2(QObject* parent) : OAuth2Base(parent)
     });
 }
 
-void MicrosoftOAuth2::startLogin()
-{
-    this->microsoft->grant();
-}
-
 void MicrosoftOAuth2::getTeamsList()
-{
+    {
     QUrl url("https://graph.microsoft.com/v1.0/me/joinedTeams");
     QNetworkReply * reply =  this->microsoft->get(url);
     connect(reply, &QNetworkReply::finished, [this, reply](){

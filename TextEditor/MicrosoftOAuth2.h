@@ -17,8 +17,8 @@ class MicrosoftOAuth2 : public OAuth2Base
 public:
     explicit MicrosoftOAuth2(QObject *parent = nullptr);
     ~MicrosoftOAuth2();
-    //void authenticate() override;
-    //void handleCallback(const QUrl &callbackUrl) override;
+    void authenticate() override;
+    void handleCallback() override;
     void startLogin();
     void getTeamsList();
     void getChannelsList(QString id);
