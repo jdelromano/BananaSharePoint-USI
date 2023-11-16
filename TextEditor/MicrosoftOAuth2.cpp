@@ -64,16 +64,6 @@ MicrosoftOAuth2::MicrosoftOAuth2(QObject* parent) : OAuth2Base(parent)
     */
     connect(this->microsoft, &QOAuth2AuthorizationCodeFlow::authorizeWithBrowser, &QDesktopServices::openUrl);
 
-    handleCallback();
-}
-
-void MicrosoftOAuth2::authenticate()
-{
-    this->microsoft->grant();
-}
-
-void MicrosoftOAuth2::handleCallback()
-{ 
     connect(this->microsoft, &QOAuth2AuthorizationCodeFlow::granted, [this]() {
         qDebug() << "token received";
         emit loggedIn();
@@ -81,6 +71,13 @@ void MicrosoftOAuth2::handleCallback()
         // this->getTeamsList();
     });
 }
+
+void MicrosoftOAuth2::authenticate()
+{
+    this->microsoft->grant();
+}
+
+
 
 void MicrosoftOAuth2::getTeamsList()
     {

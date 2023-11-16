@@ -14,7 +14,6 @@ public:
 
     // Methods to initiate authentication, handle the callback, and obtain access tokens.
     virtual void authenticate() = 0;
-    virtual void handleCallback() = 0;
     QString getAccessToken() const;
 
 signals:
