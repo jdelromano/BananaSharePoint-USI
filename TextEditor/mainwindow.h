@@ -79,7 +79,7 @@ private:
     MdiChild *activeMdiChild() const;
     QMdiSubWindow *findMdiChild(const QString &fileName) const;
     QAction* loginAct;
-    Authenticator * auth;
+    AbstractAuthenticator * auth;
     QDockWidget * dockWidget;
     QVBoxLayout* dockWidgetlayout;
     QAction * saveOnline;

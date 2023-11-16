@@ -510,8 +510,8 @@ void MainWindow::startLoginProcess()
         }
     }
     qDebug() << "start login";
-    this->auth = new Authenticator(this);
-    connect(this->auth, &Authenticator::loggedIn, this, &MainWindow::onLoggedIn);
+    this->auth = new Authenticator(this, false);
+    connect(this->auth, &AbstractAuthenticator::loggedIn, this, &MainWindow::onLoggedIn);
     this->auth->startLogin();
     this->auth->files_path = filesPath;
 }
@@ -530,8 +530,8 @@ void MainWindow::onLoggedIn()
     dockWidgetlayout->setAlignment(Qt::AlignTop);
     multiWidget->setLayout(dockWidgetlayout);
     dockWidget->setWidget(multiWidget);
-    connect(this->auth, &Authenticator::teamsListReceived, this, &MainWindow::addTeams);
-    connect(this->auth, &Authenticator::versionChecked, this, &MainWindow::sendFile);
+    connect(this->auth, &AbstractAuthenticator::teamsListReceived, this, &MainWindow::addTeams);
+    connect(this->auth, &AbstractAuthenticator::versionChecked, this, &MainWindow::sendFile);
     this->auth->getTeamsList();
 }
 
@@ -553,7 +553,7 @@ void MainWindow::addTeams(QList<QPair<QString, QString>> list_id_name){
         qDebug() << "clicked item with index: " << index << " and id: " << team_id;
         this->auth->getChannelsList(team_id);
     });
-    connect(this->auth, &Authenticator::channelsListReceived, this, &MainWindow::addChannels);
+    connect(this->auth, &AbstractAuthenticator::channelsListReceived, this, &MainWindow::addChannels);
 }
 
 /*!
@@ -578,7 +578,7 @@ void MainWindow::addChannels(QMap<QString, QString> channels, QString team_id){
         QString channel_id = ids.value(index);
         this->auth->getFilesFolder(team_id, channel_id);
     });
-    connect(this->auth, &Authenticator::filesListReceived, this, &MainWindow::addFiles);
+    connect(this->auth, &AbstractAuthenticator::filesListReceived, this, &MainWindow::addFiles);
 }
 
 /*!
@@ -586,7 +586,7 @@ void MainWindow::addChannels(QMap<QString, QString> channels, QString team_id){
  * \param list_file_infos list containing all the informations about the retrieved files
  */
 void MainWindow::addFiles(QList<fileInfos> list_file_infos){
-    connect(this->auth, &Authenticator::openFile, this, &MainWindow::openCurrentFile);
+    connect(this->auth, &AbstractAuthenticator::openFile, this, &MainWindow::openCurrentFile);
     for (auto it = list_file_infos.begin(); it != list_file_infos.end(); ++it){
         QPushButton * button = new QPushButton();
         QString fname = it->file_name;
@@ -615,7 +615,7 @@ void MainWindow::openCurrentFile(QString fileName, QString site_id, QString item
 
 /*!
  * \brief MainWindow::sendFile triggers the update of the file online, if the local version is the same as the online version
- * \param res boolean result from function Authenticator::checkVersion
+ * \param res boolean result from function AbstractAuthenticator::checkVersion
  */
 void MainWindow::sendFile(bool res){
     if (res){
