@@ -232,7 +232,6 @@ void Authenticator::checkVersion(QString site_id, QString item_id, QString versi
  * \param open boolean value which says if the file has to be opened in the text editor or not
  */
 void Authenticator::saveFileLocal(QString fileName, QString fileContent, QString site_id, QString item_id, QString version, bool open){
-    qDebug() << "inside save file local";
     QString filesJsonPath = this->files_path + "/files_params.json";
     QFile files_infos(filesJsonPath);
     if( !files_infos.open(QIODevice::ReadOnly)){

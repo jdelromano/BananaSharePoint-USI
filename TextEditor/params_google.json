@@ -1,0 +1,8 @@
+{
+ "client_id":"your client id",
+ "client_secret":"your client secret",
+ "auth_uri":"https://accounts.google.com/o/oauth2/auth",
+ "token_uri":"https://oauth2.googleapis.com/token",
+ "redirect_uri":"http://127.0.0.1:8080/",
+ "files_path":"/../../../googlefiles"
+}

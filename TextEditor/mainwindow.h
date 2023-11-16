@@ -86,6 +86,7 @@ private:
 
 private slots:
     void startLoginProcess();
+    void startLoginProcess2();
     void onLoggedIn();
     void addTeams(QList<QPair<QString, QString>> list_id_name);
     void addChannels(QMap<QString, QString> channels, QString team_id);

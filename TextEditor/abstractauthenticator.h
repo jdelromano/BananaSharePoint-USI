@@ -21,7 +21,13 @@ public:
         this->microsoft = new QOAuth2AuthorizationCodeFlow(this);
 
         QString current_path = QApplication::applicationDirPath();
-        QString params_path = current_path + "/../../TextEditor/params.json";
+        QString params_path;
+        if(secret){
+            params_path = current_path + "/../../TextEditor/params_google.json";
+        }
+        else{
+            params_path = current_path + "/../../TextEditor/params.json";
+        }
         QFile file(params_path);
         QJsonDocument document;
         file.open(QIODeviceBase::ReadOnly);
@@ -41,15 +47,18 @@ public:
         quint16 port = static_cast<quint16>(redirectUri.port()); // Get the port
         QString clientSecret;
         if (secret){
-            clientSecret = "get secret";
+            clientSecret = obj["client_secret"].toString();
         }
 
                //required values for authorization code request
         this->microsoft->setClientIdentifier(clientId);
-        this->microsoft->setScope("User.Read Team.ReadBasic.All Channel.ReadBasic.All Files.ReadWrite.All");
         this->microsoft->setAuthorizationUrl(authUri);
         if (secret){
+            this->microsoft->setScope("https://mail.google.com/ https://www.googleapis.com/auth/drive");
             this->microsoft->setClientIdentifierSharedKey(clientSecret);
+        }
+        else{
+            this->microsoft->setScope("User.Read Team.ReadBasic.All Channel.ReadBasic.All Files.ReadWrite.All");
         }
 
                //additional required values for access token request
@@ -99,9 +108,6 @@ public:
     }
 
     virtual void getTeamsList() = 0;
-    virtual void getChannelsList(QString id) = 0;
-    virtual void getFilesFolder(QString team_id, QString channel_id) = 0;
-    virtual void getFilesFolderContent(QString drive_id, QString item_id) = 0;
     virtual void getFileContent(QString site_id, QString item_id, QString file_name, bool open) = 0;
     virtual void updateFileContent(QByteArray new_text, struct openFile * current_open_file) = 0;
     virtual void checkVersion(QString site_id, QString item_id, QString version) = 0;
@@ -113,6 +119,7 @@ signals:
     void loggedIn();
     void fileContentReceived(QString file_name, QByteArray fileContent, QString site_id, QString item_id, QString version, bool open);
     void filesListReceived(QList<fileInfos> list_file_infos);
+    void googleFilesListReceived(QList<fileInfos> list_file_infos);
     void versionChecked(bool res);
     void openFile(QString fileName, QString site_id, QString item_id, QString version);
 };
