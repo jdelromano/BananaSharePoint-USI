@@ -22,6 +22,7 @@ public:
     void getFileContent(QString site_id, QString item_id, QString file_name, bool open);
     void updateFileContent(QByteArray new_text, struct openFile * current_open_file);
     void checkVersion(QString site_id, QString item_id, QString version);
+    QString files_path;
 private:
     QOAuth2AuthorizationCodeFlow * microsoft;
     QOAuthOobReplyHandler * replyHandler;

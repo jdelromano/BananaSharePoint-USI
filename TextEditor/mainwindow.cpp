@@ -477,13 +477,30 @@ void MainWindow::switchLayoutDirection()
         QGuiApplication::setLayoutDirection(Qt::LeftToRight);
 }
 
+/*!
+ * \brief MainWindow::startLoginProcess sets the file folder in which to store the files and the json file
+ * containing informations about the files, and starts the login process.
+ */
 void MainWindow::startLoginProcess()
 {
-    if (!QFile::exists("../../../files")){
-        QDir().mkdir("../../../files");
+    QString current_path = QCoreApplication::applicationDirPath();
+    QString params_path = current_path + "/../../TextEditor/params.json";
+    QFile file(params_path);
+    QJsonDocument document;
+    file.open(QIODeviceBase::ReadOnly);
+    if(file.isOpen()){
+        QByteArray json_bytes = file.readAll();
+        document = QJsonDocument::fromJson(json_bytes);
+        file.close();
     }
-    if (!QFile::exists("../../../files/files_params.json")){
-        QFile new_json_file("../../../files/files_params.json");
+    QJsonObject obj = document.object();
+    QString filesPath = current_path + obj["files_path"].toString();
+    QString filesJsonPath = filesPath + "/files_params.json";
+    if (!QFile::exists(filesPath)){
+        QDir().mkdir(filesPath);
+    }
+    if (!QFile::exists(filesJsonPath)){
+        QFile new_json_file(filesJsonPath);
         if (new_json_file.open(QFile::WriteOnly | QFile::Text)) {
             QTextStream out(&new_json_file);
             out << "[]";
@@ -496,8 +513,12 @@ void MainWindow::startLoginProcess()
     this->auth = new Authenticator(this);
     connect(this->auth, &Authenticator::loggedIn, this, &MainWindow::onLoggedIn);
     this->auth->startLogin();
+    this->auth->files_path = filesPath;
 }
 
+/*!
+ * \brief MainWindow::onLoggedIn after a successful login, it triggers the process to get the teams list
+ */
 void MainWindow::onLoggedIn()
 {
     loginAct->setText("You are in");
@@ -514,6 +535,10 @@ void MainWindow::onLoggedIn()
     this->auth->getTeamsList();
 }
 
+/*!
+ * \brief MainWindow::addTeams adds the teams on the interface
+ * \param list_id_name list containing all the informations about the retrieved teams
+ */
 void MainWindow::addTeams(QList<QPair<QString, QString>> list_id_name){
     QComboBox * selectTeam = new QComboBox(this);
     this->dockWidgetlayout->addWidget(selectTeam);
@@ -531,6 +556,11 @@ void MainWindow::addTeams(QList<QPair<QString, QString>> list_id_name){
     connect(this->auth, &Authenticator::channelsListReceived, this, &MainWindow::addChannels);
 }
 
+/*!
+ * \brief MainWindow::addChannels adds the channels on the interface
+ * \param channels map containing all informations about the retrieved channels
+ * \param team_id the id of the team previously selected
+ */
 void MainWindow::addChannels(QMap<QString, QString> channels, QString team_id){
     QComboBox * selectChannel = new QComboBox(this);
     this->dockWidgetlayout->addWidget(selectChannel);
@@ -551,6 +581,10 @@ void MainWindow::addChannels(QMap<QString, QString> channels, QString team_id){
     connect(this->auth, &Authenticator::filesListReceived, this, &MainWindow::addFiles);
 }
 
+/*!
+ * \brief MainWindow::addFiles adds all the retrieved file on the interface
+ * \param list_file_infos list containing all the informations about the retrieved files
+ */
 void MainWindow::addFiles(QList<fileInfos> list_file_infos){
     connect(this->auth, &Authenticator::openFile, this, &MainWindow::openCurrentFile);
     for (auto it = list_file_infos.begin(); it != list_file_infos.end(); ++it){
@@ -566,13 +600,23 @@ void MainWindow::addFiles(QList<fileInfos> list_file_infos){
     }
 }
 
+/*!
+ * \brief MainWindow::openCurrentFile triggers the opening of a certain file and saves important infos about it
+ * \param fileName the name of the file to open
+ * \param site_id site id of the file
+ * \param item_id item id (file id)
+ * \param version version of the file
+ */
 void MainWindow::openCurrentFile(QString fileName, QString site_id, QString item_id, QString version){
     this->current_open_file = {fileName, site_id, item_id, version};
     QString file_path = "../../../files/" + fileName;
     this->openFile(file_path);
 }
 
-
+/*!
+ * \brief MainWindow::sendFile triggers the update of the file online, if the local version is the same as the online version
+ * \param res boolean result from function Authenticator::checkVersion
+ */
 void MainWindow::sendFile(bool res){
     if (res){
         QString new_text = activeMdiChild()->getText();

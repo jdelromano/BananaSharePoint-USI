@@ -1,5 +1,5 @@
 #include "authenticator.h"
-#include "mainwindow.h"
+#include "qapplication.h"
 #include "qdesktopservices.h"
 #include "qoauthhttpserverreplyhandler.h"
 #include "QFile"
@@ -11,12 +11,17 @@
 #include "QList"
 #include "QDir"
 
+/*!
+ * \brief Authenticator::Authenticator sets up the authenticator
+ * \param parent object
+ */
 Authenticator::Authenticator(QObject *parent) : QObject{parent}{
 
     this->microsoft = new QOAuth2AuthorizationCodeFlow(this);
 
-    QFile file("../../../auth_params.json");
-    //qDebug() << "exists? " << QFile::exists("../../../auth_params.json");
+    QString current_path = QCoreApplication::applicationDirPath();
+    QString params_path = current_path + "/../../TextEditor/params.json";
+    QFile file(params_path);
     QJsonDocument document;
     file.open(QIODeviceBase::ReadOnly);
     if(file.isOpen())
@@ -74,14 +79,19 @@ Authenticator::Authenticator(QObject *parent) : QObject{parent}{
     connect(this->microsoft, &QOAuth2AuthorizationCodeFlow::granted, [this](){
         qDebug() << "token received";
         emit loggedIn();
-        qDebug() << this->microsoft->token();
     });
 }
 
+/*!
+ * \brief Authenticator::startLogin starts the login process
+ */
 void Authenticator::startLogin(){
     this->microsoft->grant();
 }
 
+/*!
+ * \brief Authenticator::getTeamsList retrieves the list of teams the user is a part of
+ */
 void Authenticator::getTeamsList(){
     QUrl url("https://graph.microsoft.com/v1.0/me/joinedTeams");
     QNetworkReply * reply =  this->microsoft->get(url);
@@ -106,6 +116,10 @@ void Authenticator::getTeamsList(){
     });
 }
 
+/*!
+ * \brief Authenticator::getChannelsList retrieves the list of channels for a certain team
+ * \param team_id the id of the team
+ */
 void Authenticator::getChannelsList(QString team_id){
     QUrl url("https://graph.microsoft.com/v1.0/teams/" + team_id + "/channels");
     QNetworkReply * reply =  this->microsoft->get(url);
@@ -129,6 +143,12 @@ void Authenticator::getChannelsList(QString team_id){
     });
 }
 
+/*!
+ * \brief Authenticator::getFilesFolder retrieves the folder of files for a certain channel, in a certain team.
+ * Then calls Authenticator::getFilesFolderContent on the received folder.
+ * \param team_id the id of the team
+ * \param channel_id the id of the channel
+ */
 void Authenticator::getFilesFolder(QString team_id, QString channel_id){
     QUrl url("https://graph.microsoft.com/v1.0/teams/" + team_id
              + "/channels/" + channel_id + "/filesFolder?");
@@ -146,6 +166,12 @@ void Authenticator::getFilesFolder(QString team_id, QString channel_id){
     });
 }
 
+/*!
+ * \brief Authenticator::getFilesFolderContent retrieves the content of the folder, which contains informations
+ * about every file in the folder. Then calls Authenticator::getFileContent for each of these files.
+ * \param drive_id the id of the drive containing the folder
+ * \param item_id the item id (folder id)
+ */
 void Authenticator::getFilesFolderContent(QString drive_id, QString item_id){
     connect(this, &Authenticator::fileContentReceived, this, &Authenticator::saveFileLocal);
     QUrl url("https://graph.microsoft.com/v1.0/drives/" + drive_id
@@ -177,27 +203,13 @@ void Authenticator::getFilesFolderContent(QString drive_id, QString item_id){
     });
 }
 
-//UNUSED
-//void Authenticator::getFileContent(QString site_id, QString item_id){
-//    QUrl url("https://graph.microsoft.com/v1.0/sites/" + site_id
-//             +"/drive/items/"+ item_id + "/content");
-//    QNetworkReply * reply =  this->microsoft->get(url);
-//    connect(reply, &QNetworkReply::finished, [this, reply, site_id, item_id](){
-//        qDebug() << "File content:";
-//        QByteArray fileContent = reply->readAll();
-//        qDebug() << fileContent;
-//        QUrl url2("https://graph.microsoft.com/v1.0/sites/" + site_id
-//                 +"/drive/items/"+ item_id + "/versions/current");
-//        QNetworkReply * reply2 =  this->microsoft->get(url2);
-//        connect(reply2, &QNetworkReply::finished, [this, fileContent, reply2, site_id, item_id](){
-//            QJsonObject reply_obj  = (QJsonDocument::fromJson(reply2->readAll())).object();
-//            QString version = reply_obj["id"].toString();
-//            qDebug() << "here 1 " << version;
-//            emit fileContentReceived(fileContent, site_id, item_id, version);
-//        });
-//    });
-//}
-
+/*!
+ * \brief Authenticator::getFileContent retrieves the content and the version of a specific file.
+ * \param site_id the site id for the file
+ * \param item_id the item id (file id)
+ * \param file_name the name of the file
+ * \param open boolean value which says if the file has to be opened in the text editor after it is retrieved or not
+ */
 void Authenticator::getFileContent(QString site_id, QString item_id, QString file_name, bool open){
     QUrl url("https://graph.microsoft.com/v1.0/sites/" + site_id
              +"/drive/items/"+ item_id + "/content");
@@ -227,6 +239,11 @@ void Authenticator::getFileContent(QString site_id, QString item_id, QString fil
 }
 
 
+/*!
+ * \brief Authenticator::updateFileContent updates the content of a file online
+ * \param new_text the new content of the file
+ * \param current_open_file structure containing informations about the currently open file (the one to update)
+ */
 void Authenticator::updateFileContent(QByteArray new_text, struct openFile * current_open_file){
     QString site_id = current_open_file->site_id;
     QString item_id = current_open_file->item_id;
@@ -242,6 +259,13 @@ void Authenticator::updateFileContent(QByteArray new_text, struct openFile * cur
     });
 }
 
+/*!
+ * \brief Authenticator::checkVersion performs a check on the version of a file. It checks wether the version of the
+ * local file and the version of the online file match.
+ * \param site_id the site id for the file
+ * \param item_id the item id (file id)
+ * \param version the version of the file stored locally
+ */
 void Authenticator::checkVersion(QString site_id, QString item_id, QString version){
     QUrl url("https://graph.microsoft.com/v1.0/sites/" + site_id
               +"/drive/items/"+ item_id + "/versions/current");
@@ -266,15 +290,27 @@ void Authenticator::checkVersion(QString site_id, QString item_id, QString versi
     });
 }
 
+/*!
+ * \brief Authenticator::saveFileLocal saves a file locally. Updates the file content, if the file already exists, otherwise it
+ * creates a new file. Also updates the file informations: id, name and version (or adds a new object with the file informations
+ * in case it is a newly added file)
+ * \param fileName the name of the file
+ * \param fileContent the content of the file version found online
+ * \param site_id the site id for the file
+ * \param item_id the item id (file id)
+ * \param version the version of the file currently online
+ * \param open boolean value which says if the file has to be opened in the text editor or not
+ */
 void Authenticator::saveFileLocal(QString fileName, QString fileContent, QString site_id, QString item_id, QString version, bool open){
-    QFile files_infos("../../../files/files_params.json");
+    QString filesJsonPath = this->files_path + "/files_params.json";
+    QFile files_infos(filesJsonPath);
     if( !files_infos.open(QIODevice::ReadOnly)){
         return;
     }
     QJsonDocument files_infos_json = QJsonDocument::fromJson(files_infos.readAll());
     files_infos.close();
     QJsonArray files_infos_array = files_infos_json.array();
-    QString file_path = "../../../files/" + fileName;
+    QString file_path = this->files_path + "/" + fileName;
     bool file_exists = QFile::exists(file_path);
     if (file_exists){ //update
         QFile file(file_path);

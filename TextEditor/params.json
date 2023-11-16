@@ -1,0 +1,8 @@
+{
+ "client_id":"your client id",
+ "auth_uri":"https://login.microsoftonline.com/687e1310-0790-4edc-8391-b528803559fc/oauth2/v2.0/authorize",
+ "token_uri":"https://login.microsoftonline.com/687e1310-0790-4edc-8391-b528803559fc/oauth2/v2.0/token",
+ "redirect_uri":"http://127.0.0.1:8080/",
+ "files_path":"/../../../files"
+}
+
