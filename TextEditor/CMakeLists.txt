@@ -46,8 +46,11 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
     mainwindow.cpp mainwindow.h
     mdichild.cpp mdichild.h
     MANUAL_FINALIZATION
-    MicrosoftOAuth2.h MicrosoftOAuth2.cpp
+    authenticatorMicrosoft.h authenticatorMicrosoft.cpp
     helperstructures.h
+    abstractauthenticator.h
+    authenticatorGoogle.h authenticatorGoogle.cpp
+    abstractauthenticator.cpp
 )
 
 #############################################################################################
@@ -99,4 +102,3 @@ if(MSVC)
     message(STATUS  "configuring file launch with ${c_qt_dir}")
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/launch.vs.json.in ${CMAKE_SOURCE_DIR}/.vs/launch.vs.json @ONLY LF)
 endif()
-

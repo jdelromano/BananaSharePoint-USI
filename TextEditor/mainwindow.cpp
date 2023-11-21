@@ -1,5 +1,7 @@
 #include <QtWidgets>
-
+#include "abstractauthenticator.h"
+#include "authenticatorgoogle.h"
+#include "authenticatormicrosoft.h"
 #include "mainwindow.h"
 #include "mdichild.h"
 
@@ -304,17 +306,33 @@ void MainWindow::createActions()
     fileMenu->addAction(saveAsAct);
 
     //Convenience button to start the login process
-    loginAct = new QAction("Microsoft login");
+    loginAct = new QAction("teams login");
     fileToolBar->addAction(loginAct);
-    connect(loginAct, &QAction::triggered, this, &MainWindow::startMicrosoftLoginProcess);
+    connect(loginAct, &QAction::triggered, [this](){
+        loginAct->setDisabled(true);
+        loginAct2->setDisabled(true);
+        this->teams = true;
+        this->startLoginProcess();
+    });
 
-    loginAct = new QAction("Google login");
-    fileToolBar->addAction(loginAct);
-    connect(loginAct, &QAction::triggered, this, &MainWindow::startGoogleLoginProcess);
+    loginAct2 = new QAction("docs login");
+    fileToolBar->addAction(loginAct2);
+    connect(loginAct2, &QAction::triggered, [this](){
+        loginAct->setDisabled(true);
+        loginAct2->setDisabled(true);
+        this->teams = false;
+        this->startLoginProcess();
+    });
 
     saveOnline = new QAction("Save online", this);
     saveOnline->setStatusTip(tr("Save the document online"));
     fileToolBar->addAction(saveOnline);
+    connect(saveOnline, &QAction::triggered, [this](){
+        this->auth->checkVersion(this->current_open_file.site_id,
+                                 this->current_open_file.item_id,
+                                 this->current_open_file.version);
+    });
+
 
     fileMenu->addSeparator();
 
@@ -475,26 +493,67 @@ void MainWindow::switchLayoutDirection()
         QGuiApplication::setLayoutDirection(Qt::LeftToRight);
 }
 
-void MainWindow::startMicrosoftLoginProcess()
+/*!
+ * \brief MainWindow::startLoginProcess sets the file folder in which to store the files and the json file
+ * containing informations about the files, and starts the login process.
+ */
+void MainWindow::startLoginProcess()
 {
-    qDebug() << "start Microsoft login";
-    this->auth = new MicrosoftOAuth2(this);
-    connect(this->auth, &MicrosoftOAuth2::loggedIn, this, &MainWindow::onLoggedIn);
+    QString current_path = QCoreApplication::applicationDirPath();
+    QString params_path;
+    if(this->teams){
+        params_path = current_path + "/../../TextEditor/params.json";
+    }
+    else{
+        params_path = current_path + "/../../TextEditor/params_google.json";
+    }
+    QFile file(params_path);
+    QJsonDocument document;
+    file.open(QIODeviceBase::ReadOnly);
+    if(file.isOpen()){
+        QByteArray json_bytes = file.readAll();
+        document = QJsonDocument::fromJson(json_bytes);
+        file.close();
+    }
+    QJsonObject obj = document.object();
+    QString filesPath = current_path + obj["files_path"].toString();
+    QString filesJsonPath = filesPath + "/files_params.json";
+    if (!QFile::exists(filesPath)){
+        QDir().mkdir(filesPath);
+    }
+    if (!QFile::exists(filesJsonPath)){
+        QFile new_json_file(filesJsonPath);
+        if (new_json_file.open(QFile::WriteOnly | QFile::Text)) {
+            QTextStream out(&new_json_file);
+            out << "[]";
+        }
+        else {
+            qDebug() << "Cannot open file";
+        }
+    }
+    qDebug() << "start login";
+    if (this->teams){
+        this->auth = new AuthenticatorMicrosoft(this, false);
+    }
+    else{
+        this->auth = new AuthenticatorGoogle(this, true);
+    }
+    connect(this->auth, &AbstractAuthenticator::loggedIn, this, &MainWindow::onLoggedIn);
     this->auth->startLogin();
+    this->auth->m_filesPath = filesPath;
 }
 
-void MainWindow::startGoogleLoginProcess()
-{
-    qDebug() << "start Google login";
-//    this->auth = new Authenticator(this);
-//    connect(this->auth, &Authenticator::loggedIn, this, &MainWindow::onLoggedIn);
-//    this->auth->startLogin();
-}
-
+/*!
+ * \brief MainWindow::onLoggedIn after a successful login, it triggers the process to get the teams list
+ */
 void MainWindow::onLoggedIn()
 {
-    loginAct->setText("You are in");
-    //add right widget to access teams
+    if (this->teams){
+        loginAct->setText("You are in");
+    }
+    else{
+        loginAct2->setText("You are in");
+    }
     this->dockWidget = new QDockWidget(tr("Dock Widget"), this);
     addDockWidget(Qt::RightDockWidgetArea, dockWidget);
     QWidget* multiWidget = new QWidget();
@@ -502,10 +561,18 @@ void MainWindow::onLoggedIn()
     dockWidgetlayout->setAlignment(Qt::AlignTop);
     multiWidget->setLayout(dockWidgetlayout);
     dockWidget->setWidget(multiWidget);
-    connect(this->auth, &MicrosoftOAuth2::teamsListReceived, this, &MainWindow::addTeams);
-    this->auth->getTeamsList();
+    //for google:
+    connect(this->auth, &AbstractAuthenticator::googleFilesListReceived, this, &MainWindow::addFiles);
+    //for microsoft:
+    connect(this->auth, &AbstractAuthenticator::teamsListReceived, this, &MainWindow::addTeams);
+    connect(this->auth, &AbstractAuthenticator::versionChecked, this, &MainWindow::sendFile);
+    this->auth->getList();
 }
 
+/*!
+ * \brief MainWindow::addTeams adds the teams on the interface
+ * \param list_id_name list containing all the informations about the retrieved teams
+ */
 void MainWindow::addTeams(QList<QPair<QString, QString>> list_id_name){
     QComboBox * selectTeam = new QComboBox(this);
     this->dockWidgetlayout->addWidget(selectTeam);
@@ -518,11 +585,16 @@ void MainWindow::addTeams(QList<QPair<QString, QString>> list_id_name){
     connect(selectTeam, &QComboBox::activated, [list_id_name, this](int index){
         QString team_id = list_id_name.at(index).first;
         qDebug() << "clicked item with index: " << index << " and id: " << team_id;
-        this->auth->getChannelsList(team_id);
+        dynamic_cast<AuthenticatorMicrosoft&>(*this->auth).getChannelsList(team_id);
     });
-    connect(this->auth, &MicrosoftOAuth2::channelsListReceived, this, &MainWindow::addChannels);
+    connect(this->auth, &AbstractAuthenticator::channelsListReceived, this, &MainWindow::addChannels);
 }
 
+/*!
+ * \brief MainWindow::addChannels adds the channels on the interface
+ * \param channels map containing all informations about the retrieved channels
+ * \param team_id the id of the team previously selected
+ */
 void MainWindow::addChannels(QMap<QString, QString> channels, QString team_id){
     QComboBox * selectChannel = new QComboBox(this);
     this->dockWidgetlayout->addWidget(selectChannel);
@@ -538,36 +610,58 @@ void MainWindow::addChannels(QMap<QString, QString> channels, QString team_id){
     }
     connect(selectChannel, &QComboBox::activated, [this, ids, team_id](int index){
         QString channel_id = ids.value(index);
-        this->auth->getFilesFolder(team_id, channel_id);
+        dynamic_cast<AuthenticatorMicrosoft&>(*this->auth).getFilesFolder(team_id, channel_id);
     });
-    connect(this->auth, &MicrosoftOAuth2::filesListReceived, this, &MainWindow::addFiles);
-    connect(this->auth, &MicrosoftOAuth2::fileContentReceived, this, &MainWindow::displayFile);
+    connect(this->auth, &AbstractAuthenticator::filesListReceived, this, &MainWindow::addFiles);
 }
 
+/*!
+ * \brief MainWindow::addFiles adds all the retrieved file on the interface
+ * \param list_file_infos list containing all the informations about the retrieved files
+ */
 void MainWindow::addFiles(QList<fileInfos> list_file_infos){
+    connect(this->auth, &AbstractAuthenticator::openFile, this, &MainWindow::openCurrentFile);
     for (auto it = list_file_infos.begin(); it != list_file_infos.end(); ++it){
         QPushButton * button = new QPushButton();
         QString fname = it->file_name;
         QString sid = it->site_id;
         QString tid = it->item_id;
         button->setText(it->file_name);
-        connect(button, &QPushButton::clicked, [this, sid, tid](){
-            qDebug() << sid;
-            qDebug() << tid;
-            this->auth->getFileContent(sid, tid);
+        connect(button, &QPushButton::clicked, [this, sid, tid, fname](){
+            this->auth->getFileContent(sid, tid, fname, true);
         });
         this->dockWidgetlayout->addWidget(button);
     }
 }
 
-void MainWindow::displayFile(QByteArray fileContent, QString site_id, QString item_id){
-    QTextEdit * text_edit = new QTextEdit(this);
-    text_edit->insertPlainText(fileContent);
-    mdiArea->addSubWindow(text_edit);
-    text_edit->show();
-    connect(this->saveOnline, &QAction::triggered, [text_edit, this, site_id, item_id](){
-        QByteArray new_text = (text_edit->toPlainText()).toUtf8();
-        this->auth->updateFileContent(site_id, item_id, new_text);
-    });
+/*!
+ * \brief MainWindow::openCurrentFile triggers the opening of a certain file and saves important infos about it
+ * \param fileName the name of the file to open
+ * \param site_id site id of the file
+ * \param item_id item id (file id)
+ * \param version version of the file
+ */
+void MainWindow::openCurrentFile(QString fileName, QString site_id, QString item_id, QString version){
+    this->current_open_file = {fileName, site_id, item_id, version};
+    QString file_path = this->auth->m_filesPath + "/" + fileName;
+    this->openFile(file_path);
+}
+
+/*!
+ * \brief MainWindow::sendFile triggers the update of the file online, if the local version is the same as the online version
+ * \param res boolean result from function AbstractAuthenticator::checkVersion
+ */
+void MainWindow::sendFile(bool res){
+    if (res){
+        QString new_text = activeMdiChild()->getText();
+        this->auth->updateFileContent(new_text.toUtf8(), &(this->current_open_file));
+    }
+    else{
+        //display message: file was already modified
+        QMessageBox::warning(
+                this,
+                tr("Text Editor"),
+                tr("This file has been modified"));
+    }
 }
 

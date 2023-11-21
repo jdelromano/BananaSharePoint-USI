@@ -5,7 +5,7 @@
 #include <QEvent>
 #include "QBoxLayout"
 #include "helperstructures.h"
-#include "MicrosoftOAuth2.h"
+#include "authenticatorMicrosoft.h"
 
 class MdiChild;
 QT_BEGIN_NAMESPACE
@@ -44,6 +44,10 @@ public:
     MainWindow();
 
     bool openFile(const QString &fileName);
+    void sendFile(bool res);
+    void startLoginProcess();
+    struct openFile current_open_file;
+    bool teams;
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -77,19 +81,18 @@ private:
     MdiChild *activeMdiChild() const;
     QMdiSubWindow *findMdiChild(const QString &fileName) const;
     QAction* loginAct;
-    MicrosoftOAuth2 * auth;
+    QAction* loginAct2;
+    AbstractAuthenticator * auth;
     QDockWidget * dockWidget;
     QVBoxLayout* dockWidgetlayout;
     QAction * saveOnline;
 
 private slots:
-    void startMicrosoftLoginProcess();
-    void startGoogleLoginProcess();
     void onLoggedIn();
     void addTeams(QList<QPair<QString, QString>> list_id_name);
     void addChannels(QMap<QString, QString> channels, QString team_id);
     void addFiles(QList<fileInfos> list_file_infos);
-    void displayFile(QByteArray fileContent, QString site_id, QString item_id);
+    void openCurrentFile(QString fileName, QString site_id, QString item_id, QString version);
 };
 
 #endif

@@ -145,3 +145,7 @@ QString MdiChild::strippedName(const QString &fullFileName)
 {
     return QFileInfo(fullFileName).fileName();
 }
+
+QString MdiChild::getText(){
+    return toPlainText();
+}
