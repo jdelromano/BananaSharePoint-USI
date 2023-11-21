@@ -6,3 +6,5 @@ build*
 
 *.vs*
 *CMakePresets_user.json
+TextEditor/google_secrets.h
+TextEditor/microsoft_secrets.h
