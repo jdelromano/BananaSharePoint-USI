@@ -46,11 +46,11 @@ AbstractAuthenticator::AbstractAuthenticator(QObject *parent,bool secret) : QObj
     if(secret){
         // QUrl authUri(secrets::googleClientId);
         params_path = "C:/Users/Johan.Jacob/Documents/GitHub/BananaSharePoint-USI/TextEditor/params_google.json";
-        #include "secrets.h"
+
     }
     else{
         params_path = "C:/Users/Johan.Jacob/Documents/GitHub/BananaSharePoint-USI/TextEditor/params.json";
-        #include "secrets.h"
+
     }
     QFile file(params_path);
     QJsonDocument document;
