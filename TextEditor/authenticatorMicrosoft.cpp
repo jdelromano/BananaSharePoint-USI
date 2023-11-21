@@ -8,12 +8,24 @@
 #include "QIterator"
 #include "QList"
 #include "QDir"
+#include "microsoft_secrets.h"
 
 /*!
  * \brief Authenticator::Authenticator sets up the authenticator
  * \param parent object
  */
-AuthenticatorMicrosoft::AuthenticatorMicrosoft(QObject *parent, bool secret) : AbstractAuthenticator(parent, secret){}
+AuthenticatorMicrosoft::AuthenticatorMicrosoft(QObject *parent, bool secret) : AbstractAuthenticator(parent, secret)
+{
+    QUrl microsoftAuthUri = MicrosoftSecrets::AUTH_URI;
+    QString microsoftClientId = MicrosoftSecrets::CLIENT_ID;
+    QUrl microsoftTokenUri = MicrosoftSecrets::TOKEN_URI;
+    QUrl microsoftRedirectUri = MicrosoftSecrets::REDIRECT_URI;
+    int microsoftPort = 8080;
+    QString microsoftClientSecret;
+    setAuthParameters(microsoftAuthUri, microsoftClientId, microsoftTokenUri, microsoftRedirectUri,
+                      microsoftPort, microsoftClientSecret);
+
+}
 
 /*!
  * \brief Authenticator::getList retrieves the list of teams the user is a part of

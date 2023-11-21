@@ -9,6 +9,7 @@
 #include "QIterator"
 #include "QList"
 #include "QDir"
+#include "google_secrets.h"
 
 /*!
  * \brief AuthenticatorGoogle::AuthenticatorGoogle constructor for google authenticator
@@ -17,7 +18,15 @@
  */
 AuthenticatorGoogle::AuthenticatorGoogle(QObject *parent, bool secret) : AbstractAuthenticator(parent, secret){
 
-    //client ID init with google...
+    QUrl googleAuthUri = GoogleSecrets::AUTH_URI;
+    QString googleClientId = GoogleSecrets::CLIENT_ID;
+    QUrl googleTokenUri = GoogleSecrets::TOKEN_URI;
+    QUrl googleRedirectUri = GoogleSecrets::REDIRECT_URI;
+    int googlePort = 3000;
+    QString googleClientSecret = GoogleSecrets::CLIENT_SECRET;
+
+    setAuthParameters(googleAuthUri, googleClientId, googleTokenUri, googleRedirectUri, googlePort,
+                      googleClientSecret);
 }
 
 /*!

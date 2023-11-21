@@ -5,6 +5,10 @@
 #include "qoauthoobreplyhandler.h"
 #include "QFile"
 #include <QObject>
+#include <QOAuth2AuthorizationCodeFlow>
+#include <QOAuthHttpServerReplyHandler>
+#include <QDesktopServices>
+#include <QDebug>
 
 class AbstractAuthenticator : public QObject
 {
@@ -20,7 +24,7 @@ protected:
 public:
     explicit AbstractAuthenticator(QObject *parent = nullptr, bool secret = false);
     QString m_filesPath;
-
+    void setAuthParameters(const QUrl &authUri, const QString &clientId, const QUrl &tokenUri, const QUrl &redirectUri, int port, const QString &clientSecret);
     void startLogin();
     virtual void getList() = 0;
     virtual void getFileContent(QString site_id, QString item_id, QString file_name, bool open) = 0;
