@@ -5,7 +5,7 @@
 #include "qjsonobject.h"
 #include "qoauthhttpserverreplyhandler.h"
 #include "qdesktopservices.h"
-#include "secrets.h"
+
 #include <stdio.h>
 
 /*!
@@ -125,12 +125,13 @@ void AbstractAuthenticator::setAuthParameters(const QUrl &authUri, const QString
     this->replyHandler = new QOAuthHttpServerReplyHandler(port, this);
     this->m_oAuth->setReplyHandler(replyHandler);
 
-    // Connect signals and slots here for any additional customization
-    // ...
 
     // Connect signal for browser authorization
     connect(this->m_oAuth, &QOAuth2AuthorizationCodeFlow::authorizeWithBrowser,
             &QDesktopServices::openUrl);
+
+    qDebug() << "tokenUri: " << tokenUri;
+    qDebug() << "replyHandler: " << replyHandler;
 
     // Connect signal for token granted
     connect(this->m_oAuth, &QOAuth2AuthorizationCodeFlow::granted, [this]() {

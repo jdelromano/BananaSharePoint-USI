@@ -516,6 +516,11 @@ void MainWindow::startLoginProcess()
         file.close();
     }
     QJsonObject obj = document.object();
+
+    QString writableDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+
+
+
     QString filesPath = current_path + obj["files_path"].toString();
     QString filesJsonPath = filesPath + "/files_params.json";
     if (!QFile::exists(filesPath)){
