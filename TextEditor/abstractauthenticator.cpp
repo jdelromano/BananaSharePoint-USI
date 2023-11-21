@@ -8,21 +8,11 @@
 #include "secrets.h"
 #include <stdio.h>
 
-
-QUrl authUri;
-QString clientId;
-QUrl tokenUri;
-QUrl redirectUri;
-int port;
-QString clientSecret;
 /*!
  * \brief AbstractAuthenticator::AbstractAuthenticator constructor which initializes the authenticator
  * \param parent parent object
  * \param secret boolean value which says if a secret value is needed for the authentication process or not
  */
-
-
-
 AbstractAuthenticator::AbstractAuthenticator(QObject *parent,bool secret) : QObject(parent) {
 
 
