@@ -11,7 +11,7 @@ class AuthenticatorMicrosoft : public AbstractAuthenticator
     Q_OBJECT
 
 public:
-    explicit AuthenticatorMicrosoft(QObject *parent = nullptr, bool secret = false);
+    explicit AuthenticatorMicrosoft(QObject *parent);
     void getList();
     void getChannelsList(QString id);
     void getFilesFolder(QString team_id, QString channel_id);

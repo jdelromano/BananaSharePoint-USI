@@ -538,10 +538,10 @@ void MainWindow::startLoginProcess()
     }
     qDebug() << "start login";
     if (this->teams){
-        this->auth = new AuthenticatorMicrosoft(this, false);
+        this->auth = new AuthenticatorMicrosoft(this);
     }
     else{
-        this->auth = new AuthenticatorGoogle(this, true);
+        this->auth = new AuthenticatorGoogle(this);
     }
     connect(this->auth, &AbstractAuthenticator::loggedIn, this, &MainWindow::onLoggedIn);
     this->auth->startLogin();

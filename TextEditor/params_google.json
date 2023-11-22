@@ -1,8 +1,0 @@
-{
-  "client_id": "20635335656-qv9j2uehraacn3boq0faq0n3a4trulil.apps.googleusercontent.com",
-  "client_secret": "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",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "redirect_uri": "http://localhost:3000/",
-  "files_path": "/../../../googlefiles"
-}

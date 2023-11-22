@@ -9,24 +9,22 @@
 #include "QIterator"
 #include "QList"
 #include "QDir"
-#include "google_secrets.h"
+#include "secrets.h"
 
 /*!
  * \brief AuthenticatorGoogle::AuthenticatorGoogle constructor for google authenticator
  * \param parent parent object
  * \param secret boolean value which tells if the authentication needs a secret value, in this case is true
  */
-AuthenticatorGoogle::AuthenticatorGoogle(QObject *parent, bool secret) : AbstractAuthenticator(parent, secret){
+AuthenticatorGoogle::AuthenticatorGoogle(QObject *parent)
+    : AbstractAuthenticator(parent, 3000)
+{
+    this->m_oAuth->setClientIdentifier(GoogleSecrets::CLIENT_ID);
+    this->m_oAuth->setAuthorizationUrl(QUrl("https://accounts.google.com/o/oauth2/auth"));
+    this->m_oAuth->setAccessTokenUrl(QUrl("https://oauth2.googleapis.com/token"));
+    this->m_oAuth->setClientIdentifierSharedKey(GoogleSecrets::CLIENT_SECRET);
 
-    QUrl googleAuthUri = GoogleSecrets::AUTH_URI;
-    QString googleClientId = GoogleSecrets::CLIENT_ID;
-    QUrl googleTokenUri = GoogleSecrets::TOKEN_URI;
-    QUrl googleRedirectUri = GoogleSecrets::REDIRECT_URI;
-    int googlePort = 3000;
-    QString googleClientSecret = GoogleSecrets::CLIENT_SECRET;
-
-    setAuthParameters(googleAuthUri, googleClientId, googleTokenUri, googleRedirectUri, googlePort,
-                      googleClientSecret);
+    this->m_oAuth->setScope("https://mail.google.com/ https://www.googleapis.com/auth/drive");
 }
 
 /*!

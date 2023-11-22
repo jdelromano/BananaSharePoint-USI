@@ -8,7 +8,7 @@ class AuthenticatorGoogle : public AbstractAuthenticator
 {
     Q_OBJECT
 public:
-    explicit AuthenticatorGoogle(QObject *parent = nullptr, bool secret = true);
+    explicit AuthenticatorGoogle(QObject *parent);
     void getList();
     void getChannelsList(QString id);
     void getFilesFolder(QString team_id, QString channel_id);

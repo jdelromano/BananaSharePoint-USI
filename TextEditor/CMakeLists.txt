@@ -49,8 +49,7 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
     authenticatorMicrosoft.h authenticatorMicrosoft.cpp
     helperstructures.h
     abstractauthenticator.h
-    google_secrets.h
-    microsoft_secrets.h
+    secrets.h
     authenticatorGoogle.h authenticatorGoogle.cpp
     abstractauthenticator.cpp
 )

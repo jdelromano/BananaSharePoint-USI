@@ -22,7 +22,7 @@ protected:
     //QOAuthOobReplyHandler *replyHandler;
 
 public:
-    explicit AbstractAuthenticator(QObject *parent = nullptr, bool secret = false);
+    explicit AbstractAuthenticator(QObject *parent, int port);
     QString m_filesPath;
     void setAuthParameters(const QUrl &authUri, const QString &clientId, const QUrl &tokenUri, const QUrl &redirectUri, int port, const QString &clientSecret);
     void startLogin();
@@ -46,6 +46,10 @@ signals:
 
 public slots:
     void saveFileLocal(QString fileName, QString fileContent, QString site_id, QString item_id, QString version, bool open);
+
+protected slots:
+    virtual void onOauthError(const QString &error, const QString &errorDescription, const QUrl &uri);
+    virtual void onGranted();
 
 };
 
