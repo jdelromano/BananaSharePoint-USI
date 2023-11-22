@@ -642,6 +642,7 @@ void MainWindow::addFiles(QList<fileInfos> list_file_infos){
  */
 void MainWindow::openCurrentFile(QString fileName, QString site_id, QString item_id, QString version){
     this->current_open_file = {fileName, site_id, item_id, version};
+    qDebug() << "new current file: " << fileName;
     QString file_path = this->auth->files_path + "/" + fileName;
     this->openFile(file_path);
 }

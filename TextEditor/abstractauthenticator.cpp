@@ -164,3 +164,31 @@ void AbstractAuthenticator::saveFileLocal(QString fileName, QString fileContent,
         emit openFile(fileName, site_id, item_id, version);
     }
 }
+
+void AbstractAuthenticator::updateLocalVersion(QString item_id, QString version){
+    QString filesJsonPath = this->files_path + "/files_params.json";
+    QFile files_infos(filesJsonPath);
+    if( !files_infos.open(QIODevice::ReadOnly)){
+        return;
+    }
+    QJsonDocument files_infos_json = QJsonDocument::fromJson(files_infos.readAll());
+    files_infos.close();
+    QJsonArray files_infos_array = files_infos_json.array();
+    bool json_updated = false;
+    int index = 0;
+    while(!json_updated && index < files_infos_array.size()){
+        QJsonObject jobj = files_infos_array.at(index).toObject();
+        if ((jobj["id"].toString()).compare(item_id) == 0){
+            json_updated = true;
+            jobj["version"] = version;
+            files_infos_array.replace(index, jobj);
+        }
+        ++index;
+    }
+    if(!files_infos.open(QIODevice::WriteOnly)){
+        return;
+    }
+    QJsonDocument doc(files_infos_array);
+    files_infos.write(doc.toJson());
+    files_infos.close();
+}

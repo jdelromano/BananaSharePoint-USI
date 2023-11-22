@@ -17,6 +17,7 @@ public:
     QOAuth2AuthorizationCodeFlow * microsoft;
     QOAuthOobReplyHandler * replyHandler;
     void startLogin();
+    void updateLocalVersion(QString item_id, QString version);
     virtual void getTeamsList() = 0;
     virtual void getFileContent(QString site_id, QString item_id, QString file_name, bool open) = 0;
     virtual void updateFileContent(QByteArray new_text, struct openFile * current_open_file) = 0;

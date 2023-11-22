@@ -160,7 +160,6 @@ void Authenticator::getFileContent(QString site_id, QString item_id, QString fil
             QString version = reply_obj["id"].toString();
             qDebug() << "file version: " << version;
             emit fileContentReceived(file_name, fileContent, site_id, item_id, version, open);
-            //qDebug() << "emitted signal with open: " << open;
         });
     });
 }
@@ -177,12 +176,21 @@ void Authenticator::updateFileContent(QByteArray new_text, struct openFile * cur
     QUrl url("https://graph.microsoft.com/v1.0/sites/" + site_id
              + "/drive/items/" + item_id + "/content");
     QNetworkReply * reply =  this->microsoft->put(url, new_text);
-    connect(reply, &QNetworkReply::finished, [reply](){
+    connect(reply, &QNetworkReply::finished, [reply, this, current_open_file](){
         if (reply->error()){
             qDebug() << reply->errorString();
             return;
         }
         qDebug() << "updated text sent";
+        qDebug() << "current version: " << current_open_file->version;
+        float v = (current_open_file->version).toFloat();
+        qDebug() << "v " << v;
+        v++;
+        qDebug() << "v " << v;
+        QString new_version = QString::number(v) + ".0";
+        this->updateLocalVersion(current_open_file->item_id, new_version);
+        current_open_file->version = new_version;
+        qDebug() << "new version update locally: " << new_version;
     });
 }
 
