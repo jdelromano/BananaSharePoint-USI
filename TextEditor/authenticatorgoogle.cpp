@@ -10,14 +10,14 @@
 #include "QList"
 #include "QDir"
 #include "secrets.h"
+#include "qtimer.h" //UPDATE: included timer
 
 /*!
  * \brief AuthenticatorGoogle::AuthenticatorGoogle constructor for google authenticator
  * \param parent parent object
  * \param secret boolean value which tells if the authentication needs a secret value, in this case is true
  */
-AuthenticatorGoogle::AuthenticatorGoogle(QObject *parent)
-    : AbstractAuthenticator(parent, 3000)
+AuthenticatorGoogle::AuthenticatorGoogle(QObject *parent) : AbstractAuthenticator(parent, 3000)
 {
     this->m_oAuth->setClientIdentifier(GoogleSecrets::CLIENT_ID);
     this->m_oAuth->setAuthorizationUrl(QUrl("https://accounts.google.com/o/oauth2/auth"));
@@ -30,8 +30,10 @@ AuthenticatorGoogle::AuthenticatorGoogle(QObject *parent)
 /*!
  * \brief Authenticator::getGoogleList retrieves the list the user is a part of
  */
-void AuthenticatorGoogle::getList(){
-    connect(this, &AbstractAuthenticator::fileContentReceived, this, &AbstractAuthenticator::saveFileLocal);
+void AuthenticatorGoogle::getList()
+{
+    connect(this, &AbstractAuthenticator::fileContentReceived, this,
+            &AbstractAuthenticator::saveFileLocal);
     auto reply = this->m_oAuth->get(QUrl("https://www.googleapis.com/drive/v3/files"));
     connect(reply, &QNetworkReply::finished, [reply, this]() {
         QList<fileInfos> list_file_infos;
@@ -39,11 +41,12 @@ void AuthenticatorGoogle::getList(){
         QJsonDocument r_json = QJsonDocument::fromJson(r);
         QJsonObject r_jsonobj = r_json.object();
         QJsonArray files = r_jsonobj["files"].toArray();
-        for (auto file = files.begin(); file != files.end(); file++){
+        for (auto file = files.begin(); file != files.end(); file++) {
             QJsonObject file_obj = (*file).toObject();
             QString id = file_obj["id"].toString();
             QString name = file_obj["name"].toString();
-            list_file_infos.append({id, "unused", name});
+            list_file_infos.append({ id, "unused", name });
+            this->getFileContent("unused", id, name, false); // UPDATE: added this line
         }
         emit googleFilesListReceived(list_file_infos);
     });
@@ -56,7 +59,8 @@ void AuthenticatorGoogle::getList(){
  * \param file_name the name of the file
  * \param open boolean value which says if the file has to be opened in the text editor after it is retrieved or not
  */
-void AuthenticatorGoogle::getFileContent(QString site_id, QString item_id, QString file_name, bool open){
+void AuthenticatorGoogle::getFileContent(QString site_id, QString item_id, QString file_name, bool open)
+{
     QString url = "https://www.googleapis.com/drive/v2/files/" + item_id + "/export";
     QVariantMap map;
     QVariant map_value("text/plain");
@@ -64,22 +68,51 @@ void AuthenticatorGoogle::getFileContent(QString site_id, QString item_id, QStri
     QNetworkReply *reply = this->m_oAuth->get(QUrl(url), map);
     connect(reply, &QNetworkReply::finished, [reply, this, item_id, file_name, site_id, open]() {
         QByteArray fileContent = reply->readAll();
-        emit fileContentReceived(file_name, fileContent, site_id, item_id, "version", open);
+        // UPDATE: replaced line that was here before with code from HERE
+        QString url2 = "https://www.googleapis.com/drive/v2/files/" + item_id + "?fields=modifiedDate";
+        QNetworkReply *reply2 = this->m_oAuth->get(QUrl(url2));
+        connect(reply2, &QNetworkReply::finished,
+                [reply2, this, fileContent, file_name, site_id, item_id, open]() {
+                    QByteArray r = reply2->readAll();
+                    QJsonDocument r_json = QJsonDocument::fromJson(r);
+                    QJsonObject r_jsonobj = r_json.object();
+                    QString version = r_jsonobj["modifiedDate"].toString();
+                    emit fileContentReceived(file_name, fileContent, site_id, item_id, version, open);
+                });
+        // to HERE
     });
 }
-
 
 /*!
  * \brief Authenticator::updateFileContent updates the content of a file online
  * \param new_text the new content of the file
  * \param current_open_file structure containing informations about the currently open file (the one to update)
  */
-void AuthenticatorGoogle::updateFileContent(QByteArray new_text, struct openFile * current_open_file){
-    QString url = "https://www.googleapis.com/upload/drive/v2/files/" + current_open_file->item_id;
+void AuthenticatorGoogle::updateFileContent(QByteArray new_text, struct openFile *current_open_file)
+{
+    // UPDATE: updated all this method
+    QString id = current_open_file->item_id;
+    QString url = "https://www.googleapis.com/upload/drive/v2/files/" + id;
     QNetworkReply *reply = this->m_oAuth->put(QUrl(url), new_text);
-    connect(reply, &QNetworkReply::finished, [reply, this]() {
-        qDebug() << "REQUEST FINISHED. Error? " << (reply->error() != QNetworkReply::NoError);
-        //qDebug() << reply->readAll();
+    connect(reply, &QNetworkReply::finished, [reply, this, current_open_file, id]() {
+        qDebug() << "REQUEST FINISHED TO UPDATE FILE ONLINE. Error? "
+                 << (reply->error() != QNetworkReply::NoError);
+        qDebug() << "file content updated online";
+        QTimer *timer = new QTimer(this);
+        connect(timer, &QTimer::timeout, [id, this, current_open_file]() {
+            QString url2 = "https://www.googleapis.com/drive/v2/files/" + id + "?fields=modifiedDate";
+            QNetworkReply *reply2 = this->m_oAuth->get(QUrl(url2));
+            connect(reply2, &QNetworkReply::finished, [reply2, this, id, current_open_file]() {
+                QByteArray r = reply2->readAll();
+                QJsonDocument r_json = QJsonDocument::fromJson(r);
+                QJsonObject r_jsonobj = r_json.object();
+                QString version = r_jsonobj["modifiedDate"].toString();
+                current_open_file->version = version;
+                qDebug() << "local version updated to: " << version;
+            });
+        });
+        connect(timer, &QTimer::timeout, timer, &QTimer::stop);
+        timer->start(1000); // wait 1 second after the file content update to get the correct new modifiedDate
     });
 }
 
@@ -90,6 +123,22 @@ void AuthenticatorGoogle::updateFileContent(QByteArray new_text, struct openFile
  * \param item_id the item id (file id)
  * \param version the version of the file stored locally
  */
-void AuthenticatorGoogle::checkVersion(QString site_id, QString item_id, QString version){
-    emit versionChecked(true);
+void AuthenticatorGoogle::checkVersion(QString site_id, QString item_id, QString version)
+{
+    // UPDATE: updated all this method
+    QString url = "https://www.googleapis.com/drive/v2/files/" + item_id + "?fields=modifiedDate";
+    QNetworkReply *reply = this->m_oAuth->get(QUrl(url));
+    connect(reply, &QNetworkReply::finished, [reply, this, version, item_id]() {
+        QByteArray r = reply->readAll();
+        QJsonDocument r_json = QJsonDocument::fromJson(r);
+        QJsonObject r_jsonobj = r_json.object();
+        QString new_version = r_jsonobj["modifiedDate"].toString();
+        qDebug() << "local version: " << version;
+        qDebug() << "online version: " << new_version;
+        if (new_version.compare(version, Qt::CaseSensitive) == 0) {
+            emit versionChecked(true);
+        } else {
+            emit versionChecked(false);
+        }
+    });
 }

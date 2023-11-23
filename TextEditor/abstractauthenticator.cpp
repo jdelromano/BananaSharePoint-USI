@@ -38,8 +38,13 @@ AbstractAuthenticator::AbstractAuthenticator(QObject *parent, int port) : QObjec
             &AbstractAuthenticator::onOauthError);
 
     // Connect signal for token granted
-    connect(this->m_oAuth, &QOAuth2AuthorizationCodeFlow::granted, this,
-            &AbstractAuthenticator::onGranted );
+    /*connect(this->m_oAuth, &QOAuth2AuthorizationCodeFlow::granted, this,
+            &AbstractAuthenticator::onGranted );*/
+
+    connect(this->m_oAuth, &QOAuth2AuthorizationCodeFlow::granted, [this]() {
+        qDebug() << "token received";
+        emit loggedIn();
+    });
 
 }
 
