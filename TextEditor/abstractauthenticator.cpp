@@ -23,12 +23,23 @@ AbstractAuthenticator::AbstractAuthenticator(QObject *parent, int port) : QObjec
     connect(this->m_oAuth, &QOAuth2AuthorizationCodeFlow::authorizeWithBrowser,
             &QDesktopServices::openUrl);
 
+    if (port = 8080) {
+        this->m_oAuth->setModifyParametersFunction(
+                [](QAbstractOAuth::Stage stage, QMultiMap<QString, QVariant> *parameters) {
+                    // Percent-decode the "code" parameter
+                    if (stage == QAbstractOAuth::Stage::RequestingAccessToken) {
+                        QByteArray code = parameters->value("code").toByteArray();
+                        parameters->replace("code", QUrl::fromPercentEncoding(code));
+                    }
+        });
+    }
+    
     connect(this->m_oAuth, &QOAuth2AuthorizationCodeFlow::error, this,
             &AbstractAuthenticator::onOauthError);
 
     // Connect signal for token granted
     connect(this->m_oAuth, &QOAuth2AuthorizationCodeFlow::granted, this,
-            &AbstractAuthenticator::onGranted);
+            &AbstractAuthenticator::onGranted );
 
 }
 
