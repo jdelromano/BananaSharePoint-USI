@@ -24,6 +24,7 @@ protected:
 public:
     explicit AbstractAuthenticator(QObject *parent, int port);
     QString m_filesPath;
+    //QString fileDataDir
     void setAuthParameters(const QUrl &authUri, const QString &clientId, const QUrl &tokenUri, const QUrl &redirectUri, int port, const QString &clientSecret);
     void startLogin();
     virtual void getList() = 0;

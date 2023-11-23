@@ -78,8 +78,9 @@ void AbstractAuthenticator::startLogin(){
  * \param open boolean value which says if the file has to be opened in the text editor or not
  */
 void AbstractAuthenticator::saveFileLocal(QString fileName, QString fileContent, QString site_id, QString item_id, QString version, bool open){
-    //QString filesJsonPath = this->m_filesPath + "/files_params.json";
+
     QString filesJsonPath = this->m_filesPath + "/files_params.json";
+    //QString filesJsonPath = this->fileDataDir + "/files_params.json";
     QFile files_infos(filesJsonPath);
     if( !files_infos.open(QIODevice::ReadOnly)){
         return;
@@ -87,8 +88,8 @@ void AbstractAuthenticator::saveFileLocal(QString fileName, QString fileContent,
     QJsonDocument files_infos_json = QJsonDocument::fromJson(files_infos.readAll());
     files_infos.close();
     QJsonArray files_infos_array = files_infos_json.array();
-    //QString file_path = this->m_filesPath + "/" + fileName;
     QString file_path = this->m_filesPath + "/" + fileName;
+    //QString file_path = this->fileDataDir + "/" + fileName;
     bool file_exists = QFile::exists(file_path);
     if (file_exists){ //update
         QFile file(file_path);

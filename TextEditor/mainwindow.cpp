@@ -518,11 +518,13 @@ void MainWindow::startLoginProcess()
     QJsonObject obj = document.object();
 
     QString writableDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-
+    QString fileDataDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
 
 
     QString filesPath = current_path + obj["files_path"].toString();
+    //QString filesPath = writableDir;
     QString filesJsonPath = filesPath + "/files_params.json";
+    //QString filesJsonPath = writableDir + "/files_params.json";
     if (!QFile::exists(filesPath)){
         QDir().mkdir(filesPath);
     }
@@ -649,6 +651,7 @@ void MainWindow::addFiles(QList<fileInfos> list_file_infos){
 void MainWindow::openCurrentFile(QString fileName, QString site_id, QString item_id, QString version){
     this->current_open_file = {fileName, site_id, item_id, version};
     QString file_path = this->auth->m_filesPath + "/" + fileName;
+    //QString file_path = this->auth->m_filesPath + "/" + fileName;
     this->openFile(file_path);
 }
 
