@@ -9,6 +9,7 @@
 #include <QOAuthHttpServerReplyHandler>
 #include <QDesktopServices>
 #include <QDebug>
+#include <QtWidgets>
 
 class AbstractAuthenticator : public QObject
 {
@@ -24,7 +25,8 @@ protected:
 public:
     explicit AbstractAuthenticator(QObject *parent, int port);
     QString m_filesPath;
-    //QString fileDataDir
+    QString writableDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    QString fileDataDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
     void setAuthParameters(const QUrl &authUri, const QString &clientId, const QUrl &tokenUri, const QUrl &redirectUri, int port, const QString &clientSecret);
     void startLogin();
     virtual void getList() = 0;

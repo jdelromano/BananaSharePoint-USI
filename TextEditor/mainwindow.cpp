@@ -493,38 +493,37 @@ void MainWindow::switchLayoutDirection()
         QGuiApplication::setLayoutDirection(Qt::LeftToRight);
 }
 
+
+QString writableDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+QString fileDataDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
 /*!
  * \brief MainWindow::startLoginProcess sets the file folder in which to store the files and the json file
  * containing informations about the files, and starts the login process.
  */
 void MainWindow::startLoginProcess()
 {
-    QString current_path = QCoreApplication::applicationDirPath();
-    QString params_path;
-    if(this->teams){
-        params_path = current_path + "/../../TextEditor/params.json";
-    }
-    else{
-        params_path = current_path + "/../../TextEditor/params_google.json";
-    }
-    QFile file(params_path);
-    QJsonDocument document;
-    file.open(QIODeviceBase::ReadOnly);
-    if(file.isOpen()){
-        QByteArray json_bytes = file.readAll();
-        document = QJsonDocument::fromJson(json_bytes);
-        file.close();
-    }
-    QJsonObject obj = document.object();
+    //QString current_path = QCoreApplication::applicationDirPath();
+    //QString params_path;
+    //if(this->teams){
+    //    params_path = current_path + "/../../TextEditor/params.json";
+    //}
+    //else{
+    //    params_path = current_path + "/../../TextEditor/params_google.json";
+    //}
+    //QFile file(params_path);
+    //QJsonDocument document;
+    //file.open(QIODeviceBase::ReadOnly);
+    //if(file.isOpen()){
+    //    QByteArray json_bytes = file.readAll();
+    //    document = QJsonDocument::fromJson(json_bytes);
+    //    file.close();
+    //}
+    //QJsonObject obj = document.object();
 
-    QString writableDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    QString fileDataDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-
-
-    QString filesPath = current_path + obj["files_path"].toString();
-    //QString filesPath = writableDir;
-    QString filesJsonPath = filesPath + "/files_params.json";
-    //QString filesJsonPath = writableDir + "/files_params.json";
+    //QString filesPath = current_path + obj["files_path"].toString();
+    QString filesPath = writableDir;
+    //QString filesJsonPath = filesPath + "/files_params.json";
+    QString filesJsonPath = fileDataDir + "/files_params.json";
     if (!QFile::exists(filesPath)){
         QDir().mkdir(filesPath);
     }
@@ -650,8 +649,8 @@ void MainWindow::addFiles(QList<fileInfos> list_file_infos){
  */
 void MainWindow::openCurrentFile(QString fileName, QString site_id, QString item_id, QString version){
     this->current_open_file = {fileName, site_id, item_id, version};
-    QString file_path = this->auth->m_filesPath + "/" + fileName;
     //QString file_path = this->auth->m_filesPath + "/" + fileName;
+    QString file_path = writableDir + "/" + fileName;
     this->openFile(file_path);
 }
 

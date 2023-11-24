@@ -5,7 +5,7 @@
 #include "qjsonobject.h"
 #include "qoauthhttpserverreplyhandler.h"
 #include "qdesktopservices.h"
-
+#include <QtWidgets>
 #include <stdio.h>
 
 /*!
@@ -66,6 +66,8 @@ void AbstractAuthenticator::startLogin(){
     this->m_oAuth->grant();
 }
 
+//QString writableDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+//QString fileDataDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
 /*!
  * \brief Authenticator::saveFileLocal saves a file locally. Updates the file content, if the file already exists, otherwise it
  * creates a new file. Also updates the file informations: id, name and version (or adds a new object with the file informations
@@ -79,8 +81,8 @@ void AbstractAuthenticator::startLogin(){
  */
 void AbstractAuthenticator::saveFileLocal(QString fileName, QString fileContent, QString site_id, QString item_id, QString version, bool open){
 
-    QString filesJsonPath = this->m_filesPath + "/files_params.json";
-    //QString filesJsonPath = this->fileDataDir + "/files_params.json";
+    //QString filesJsonPath = this->m_filesPath + "/files_params.json";
+    QString filesJsonPath = fileDataDir + "/files_params.json";
     QFile files_infos(filesJsonPath);
     if( !files_infos.open(QIODevice::ReadOnly)){
         return;
@@ -88,8 +90,8 @@ void AbstractAuthenticator::saveFileLocal(QString fileName, QString fileContent,
     QJsonDocument files_infos_json = QJsonDocument::fromJson(files_infos.readAll());
     files_infos.close();
     QJsonArray files_infos_array = files_infos_json.array();
-    QString file_path = this->m_filesPath + "/" + fileName;
-    //QString file_path = this->fileDataDir + "/" + fileName;
+    //QString file_path = this->m_filesPath + "/" + fileName;
+    QString file_path = writableDir + "/" + fileName;
     bool file_exists = QFile::exists(file_path);
     if (file_exists){ //update
         QFile file(file_path);
