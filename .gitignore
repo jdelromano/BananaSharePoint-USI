@@ -6,3 +6,9 @@ build*
 
 *.vs
 *CMakePresets_user.json
+FileSend/Microsoft_secrets.h
+FileSend/Google_secrets.h
+Running_FileSend/Google_secrets.h
+Running_FileSend/Microsoft_secrets.h
+Running_FileSend/Microsoft_secrets.h
+Running_FileSend/Google_secrets.h
