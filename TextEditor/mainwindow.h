@@ -67,6 +67,7 @@ private slots:
     void updateWindowMenu();
     MdiChild *createMdiChild();
     void switchLayoutDirection();
+    void switchLanguageToGerman();
 
 private:
 

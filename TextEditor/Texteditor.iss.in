@@ -1,0 +1,38 @@
+
+#define m_appName "@CPACK_PACKAGE_NAME@"
+#define m_appVersion "@CPACK_PACKAGE_VERSION@"
+#define m_defaultDir "@c_currentDir@"
+#define m_executablePath "@c_executablePath@"
+
+[Setup]
+AppName= {#m_appName}
+AppVersion= {#m_appVersion}
+//DefaultDirName={sd}\TextEditor
+DefaultDirName={#m_defaultDir}
+OutputDir=Output
+OutputBaseFilename=TextEditorInstaller
+Compression=lzma2/ultra64
+SolidCompression=yes
+ChangesAssociations=yes
+CreateUninstallRegKey=no
+
+[Files]
+//Source: "{#RELATIVE_EXECUTABLE_PATH}"; DestDir: "{app}"; Flags: ignoreversion
+//Source: "{#RELATIVE_QT_DLL_PATH}Qt6Core.dll"; DestDir: "{app}"; Flags: ignoreversion
+//Source: "{#RELATIVE_QT_DLL_PATH}Qt6Gui.dll"; DestDir: "{app}"; Flags: ignoreversion
+//Source: "{#RELATIVE_QT_DLL_PATH}Qt6Widgets.dll"; DestDir: "{app}"; Flags: ignoreversion
+//Source: "{#RELATIVE_QT_DLL_PATH}Qt6Network.dll"; DestDir: "{app}"; Flags: ignoreversion
+; Add other necessary files and libraries
+
+// Source: "C:\Users\Johan.Jacob\Documents\GitHub\BananaSharePoint-USI\TextEditor\build\0-debug\bin_Debug\TextEditor.exe"; DestDir: "{app}"; Flags: ignoreversion
+
+
+Source: "C:\Qt\6.6.1\msvc2019_64\bin\*.dll"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: "{#m_executablePath}"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+
+; Add other necessary files and libraries
+
+
+
+[Icons]
+Name: "{commondesktop}\TextEditor"; Filename: "{app}\TextEditor.exe"; 

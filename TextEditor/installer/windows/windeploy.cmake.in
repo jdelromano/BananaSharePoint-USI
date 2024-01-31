@@ -1,0 +1,170 @@
+##################################################################
+##
+## Copyright (C) 1989-2022 Banana.ch SA - Lugano, Switzerland
+## All rigths reserved
+##
+## Contact: https://www.banana.ch/
+##
+## This file is part of the Banana Accounting software
+##
+##################################################################
+
+cmake_minimum_required(VERSION 3.21)
+
+#############################################################################################
+# Options for testing purposes (should all be ON)
+#############################################################################################
+option(m_RUN_WINDEPLOY "Runs windeploy from the Qt installation" ON)
+option(m_DO_SIGNING "Runs the signtool" ON)
+option(m_BUILD_EXE_SETUP "Builds the exe installer using InnoSetup" ON)
+option(m_BUILD_MSIX_SETUP "builds the msix installer" ON)
+
+#############################################################################################
+# Variables defined via cmake's configure_file
+#############################################################################################
+set(CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@")
+set(c_exe_name "@c_exe_name@")
+set(c_exe_nameSuffix "@c_exe_nameSuffix@")
+set(c_qmlSourcesDir "@c_qmlSourcesDir@")
+set(CMAKE_INSTALL_LIBDIR "@CMAKE_INSTALL_LIBDIR@")
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS "@CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS@")
+set(CMAKE_SYSTEM_PROCESSOR "@CMAKE_SYSTEM_PROCESSOR@")
+set(CPACK_PACKAGE_ICON "@CPACK_PACKAGE_ICON@")
+set(PROJECT_VERSION_MAJOR "@PROJECT_VERSION_MAJOR@")
+set(PROJECT_VERSION_MINOR "@PROJECT_VERSION_MINOR@")
+set(PROJECT_VERSION_PATCH "@PROJECT_VERSION_PATCH@")
+set(PROJECT_VERSION_TWEAK "@PROJECT_VERSION_TWEAK@")
+set(INNOSETUP_COMPILER "@INNOSETUP_COMPILER@")
+set(innosetup_iss_in_file "@innosetup_iss_in_file@")
+set(innosetup_translationDir "@innosetup_translationDir@")
+set(innosetup_wizardSmallImageFile "@innosetup_wizardSmallImageFile@")
+set(msix_conf_dir "@msix_conf_dir@")
+set(SIGN_TOOL_EXE "@SIGN_TOOL_EXE@")
+set(WINDEPLOYQT_EXE "@WINDEPLOYQT_EXE@")
+
+#############################################################################################
+# local variables
+#############################################################################################
+file (TO_NATIVE_PATH ${CPACK_OUTPUT_FILE_PREFIX} CPACK_OUTPUT_FILE_PREFIX_NATIVE)
+
+
+#############################################################################################
+# Run WinDeployQt
+#############################################################################################
+
+if(m_RUN_WINDEPLOY)
+    if(WINDEPLOYQT_EXE)
+        message(STATUS "Running Qt Deploy Tool in ${CPACK_TEMPORARY_DIRECTORY}")
+
+        set(conf_flag --release)
+        set(inc_pdb false)
+        if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+            set (conf_flag --debug)
+            set(inc_pdb true)
+        elseif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+            set (conf_flag --release)
+            set(inc_pdb true)
+        endif()
+
+        set(cmd_args
+            --no-translations #translations provided by mainproject
+            --force
+            --ignore-library-errors 
+            --no-compiler-runtime
+            --no-opengl-sw
+            --qmldir=${c_qmlSourcesDir}
+        )
+        if(inc_pdb)
+            set(cmd_args ${cmd_args} --pdb)
+        endif()
+
+        execute_process (
+            COMMAND
+                ${WINDEPLOYQT_EXE}
+                ${CPACK_TEMPORARY_DIRECTORY}
+                ${conf_flag} 
+                ${cmd_args}
+        
+        )
+        if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+            execute_process (
+                COMMAND
+                    ${WINDEPLOYQT_EXE}
+                    ${CPACK_TEMPORARY_DIRECTORY}/KF5Archive.dll
+                    --release
+                    ${cmd_args}
+            )
+        endif()
+    else()
+        message(WARNING "WinDeployQt not defined, installer won't work.")
+    endif()
+endif()
+
+#############################################################################################
+# add System Libraries
+#############################################################################################
+file(INSTALL ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+    DESTINATION ${CPACK_TEMPORARY_INSTALL_DIRECTORY}
+)
+
+#############################################################################################
+# Create exe installer with InnoSetup
+#############################################################################################
+
+if(m_BUILD_EXE_SETUP)
+    if(INNOSETUP_COMPILER)
+
+        file (TO_NATIVE_PATH ${innosetup_wizardSmallImageFile} innosetup_wizardSmallImageFile)
+        file (TO_NATIVE_PATH ${innosetup_translationDir} innosetup_translationDir)
+        file (TO_NATIVE_PATH ${CPACK_TEMPORARY_DIRECTORY} c_sourceDir)
+        file (TO_NATIVE_PATH ${CPACK_PACKAGE_ICON} c_packageIcon)
+        file (TO_NATIVE_PATH ${CPACK_OUTPUT_FILE_PREFIX} c_outputDir)
+        if(SIGNTOOL_ARGS_FOR_FILES)
+            file (TO_NATIVE_PATH ${SIGN_TOOL_EXE} c_signTool)
+        endif()
+        
+        configure_file(${innosetup_iss_in_file} ${CPACK_TOPLEVEL_DIRECTORY}/installerBanana.iss @ONLY)
+        set(commandToExec 
+                ${INNOSETUP_COMPILER}
+                ${CPACK_TOPLEVEL_DIRECTORY}/installerBanana.iss
+        )
+        if(NOT SIGNTOOL_ARGS_FOR_FILES)
+            list(APPEND commandToExec /DNO_SIGNATURE=ON)
+        endif()
+
+        execute_process (
+            COMMAND
+                ${commandToExec}
+            WORKING_DIRECTORY 
+                ${CPACK_TEMPORARY_DIRECTORY}
+            RESULT_VARIABLE inno_result
+            OUTPUT_VARIABLE inno_output
+            ERROR_VARIABLE inno_error
+        )
+        message (CHECK_START "Inno Setup" )
+        if(inno_result)
+            message(CHECK_FAIL "Inno result: ${inno_result} ${inno_error}")
+            #message(STATUS "Inno output: ${inno_output}")
+        else()
+            message(CHECK_PASS "Succeed")
+        endif()
+
+    else()
+        message (WARNING "Not running Inno Setup")
+    endif()
+endif()
+
+#####################################################
+# Final steps
+# Show Deploy folder
+#####################################################
+string(TIMESTAMP c_releaseDate "%a %d/%m/%Y %H:%M" UTC)
+set(c_releaseVersion ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}.${PROJECT_VERSION_TWEAK})
+file(WRITE "${CPACK_OUTPUT_FILE_PREFIX}/releaseDate.txt" ${c_releaseDate})
+file(WRITE "${CPACK_OUTPUT_FILE_PREFIX}/version.txt" ${c_releaseVersion})
+
+message (STATUS "Version ${c_releaseVersion} created on ${c_releaseDate}")
+message (STATUS "Installation packages generated under ${CPACK_OUTPUT_FILE_PREFIX_NATIVE}")
+#execute_process(
+#    COMMAND start ${CPACK_OUTPUT_FILE_PREFIX_NATIVE}
+#)

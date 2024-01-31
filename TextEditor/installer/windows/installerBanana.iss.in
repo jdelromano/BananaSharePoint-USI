@@ -1,0 +1,321 @@
+﻿;------------------------------------------------------------------------------
+; -- bananaInstaller.iss --
+; Setup program for Banana Accounting+
+;
+; Autore:    Banana.ch
+; Version:   1.0
+;
+; switches that can be called from command line using the /D arg
+; #define NO_SIGNATURE
+; i.e: ISCC.exe /Qp installerBanana.iss /DNO_SIGNATURE=ON
+;------------------------------------------------------------------------------
+
+#define m_exeShortVersion str(@PROJECT_VERSION_MAJOR@) + "." + str(@PROJECT_VERSION_MINOR@)
+#define m_exeLongVersion str(m_exeShortVersion) + "." + str(@PROJECT_VERSION_PATCH@) + "." + str(@PROJECT_VERSION_TWEAK@)
+
+#define m_sourceDir "@c_sourceDir@"
+
+#define m_appPath "@c_sourceDir@\@c_exe_name@.exe"
+
+#define m_application "@c_exe_name@"
+#define m_displayName "@CPACK_PACKAGE_DISPLAY_NAME@"
+#define m_outputFileName "@CPACK_PACKAGE_FILE_NAME@"
+#define m_iconFile "@c_packageIcon@"
+
+#define m_appPublisher "@CPACK_PACKAGE_VENDOR@"
+#define m_appURL "@CPACK_PACKAGE_HOMEPAGE_URL@"
+
+#define m_exe_nameSuffix "@c_exe_nameSuffix@"
+#define m_smallImages "@innosetup_wizardSmallImageFile@"
+#define m_translationDir "@innosetup_translationDir@"
+
+#define m_currentYear GetDateTimeString('yyyy', '', '')
+
+#define m_exe_nameSuffixText
+#if (m_exe_nameSuffix == "Dev")
+  #define m_exe_nameSuffixText  " Dev Channel"
+#elif (m_exe_nameSuffix == "Internal")
+  #define m_internalAppName "Banana Internal"
+#elif (m_exe_nameSuffix == "Beta")
+  #define m_exe_nameSuffixText  " Beta"
+#endif
+
+#define m_appId "@c_exe_name@"
+#define m_appExeName  m_appId + ".exe"
+
+
+[CustomMessages]    
+
+m_appName=Banana Accounting+
+chs.m_appName=Banana会计+
+deu.m_appName=Banana Buchhaltung+
+fra.m_appName=Banana Comptabilité+
+esp.m_appName=Banana Contabilidad+
+ita.m_appName=Banana Contabilità+
+nld.m_appName=Banana Boekhouding+
+ptb.m_appName=Contabilidade Banana+
+
+MyBananaFileDescr=Banana document                            
+chs.MyBananaFileDescr=Banana 文档
+deu.MyBananaFileDescr=Banana Document
+esp.MyBananaFileDescr=Archivo Banana
+fra.MyBananaFileDescr=Document Banana
+ita.MyBananaFileDescr=Documento di Banana
+nld.MyBananaFileDescr=Banana bestand
+ptb.MyBananaFileDescr=Arquivo Banana
+
+
+[Setup]
+; NOTE: The value of AppId uniquely identifies this application.
+; Do not use the same AppId value in installers for other applications.
+; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
+
+; we potentially need to install vcRedist, but this will run in a separate process
+; and will ask for elevation by himself
+
+#if (m_exe_nameSuffix == "Internal")
+    AppName={#m_internalAppName}
+    DefaultGroupName={#m_internalAppName}
+#else
+    AppName={cm:m_appName}{#m_exe_nameSuffixText}
+    DefaultGroupName={cm:m_appName}
+#endif
+
+#if (m_exe_nameSuffix == "Dev")
+    DisableDirPage=no
+#else
+    DisableDirPage=auto
+#endif
+
+PrivilegesRequired=lowest
+
+;dialog fa vedere un dialogo all'inizio
+;commandline permette l'elevazione tramite il parametro /ALLUSERS
+PrivilegesRequiredOverridesAllowed=dialog
+
+; Don't use the task settings of the previous installation
+UsePreviousTasks=no
+; minimal version of windows, currently windows 8
+MinVersion=6.2
+
+; Prevent the installation while the application is still running
+AppMutex={#m_appId}
+
+AppId={#m_appId}
+AppVersion={#m_exeLongVersion}
+AppPublisher={#m_appPublisher}
+AppPublisherURL={#m_appURL}
+AppSupportURL={#m_appURL}
+AppUpdatesURL={#m_appURL}
+DefaultDirName={autopf}\{#m_appId}
+
+; Informations for the setup binary file
+AppVerName={cm:m_appName}
+VersionInfoDescription={#m_appId} - Setup
+VersionInfoVersion={#m_exeLongVersion}
+
+AppCopyright=Copyright {#m_currentYear} Banana.ch SA
+OutputBaseFilename={#m_outputFileName}
+
+ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode=x64
+
+Compression=lzma
+SolidCompression=yes
+ChangesAssociations=yes
+
+VersionInfoProductName={#m_displayName}
+SetupIconFile={#m_iconFile}
+UninstallDisplayIcon={app}\{#m_appExeName}
+
+
+RestartIfNeededByRun=no
+ShowLanguageDialog=auto 
+;Disabilita pagine?
+;DisableWelcomePage=no
+
+DisableProgramGroupPage=yes
+DisableFinishedPage=yes
+DisableReadyPage=yes
+AlwaysShowDirOnReadyPage=yes
+
+;Choose directory not shown
+UsePreviousAppDir=yes
+DirExistsWarning=auto
+
+
+WizardStyle=modern
+WizardImageStretch=yes
+WizardSmallImageFile={#m_smallImages}
+
+OutputDir=@c_outputDir@
+
+; see https://jrsoftware.org/ishelp/index.php?topic=componentstasksparams
+; in the IDE of InnoSetup, we must setup a signTool 
+; in the IDE we will set a SignTool as follows:
+; name sToolFromCmake
+; value $p
+#ifndef NO_SIGNATURE
+SignedUninstaller=yes
+SignTool=sToolFromCmake @c_signTool@ @SIGNTOOL_ARGS_FOR_FILES@ $f
+#endif
+
+
+[Languages]
+Name: enu; MessagesFile: "compiler:Default.isl";
+Name: fra; MessagesFile: "{#m_translationDir}\French.isl";
+Name: deu; MessagesFile: "{#m_translationDir}\German.isl";
+Name: ita; MessagesFile: "{#m_translationDir}\Italian.isl";
+Name: esp; MessagesFile: "{#m_translationDir}\Spanish.isl";
+Name: chs; MessagesFile: "{#m_translationDir}\ChineseSimplified.isl";
+Name: ptb; MessagesFile: "{#m_translationDir}\BrazilianPortuguese.isl";
+Name: nld; MessagesFile: "{#m_translationDir}\Dutch.isl";
+Name: rus; MessagesFile: "{#m_translationDir}\Russian.isl";
+Name: jpn; MessagesFile: "{#m_translationDir}\Japanese.isl";
+
+[Files]
+Source: "{#m_appPath}"; DestDir: "{app}"; DestName: "{#m_appExeName}"; Flags: ignoreversion;      
+Source: "{#m_sourceDir}\*"; DestDir: "{app}"; Excludes: "ban*.exe"; Flags: ignoreversion recursesubdirs createallsubdirs;
+
+
+[Icons]
+Name: "{autostartmenu}\{cm:m_appName}{#m_exe_nameSuffixText}"; Filename: "{app}\{#m_appExeName}"
+Name: "{autodesktop}\{cm:m_appName}{#m_exe_nameSuffixText}"; Filename: "{app}\{#m_appExeName}";
+;Name: "{autodesktop}\{cm:m_appName}"; Filename: "{app}\{#m_appExeName}"; Tasks: desktopicon
+
+[InstallDelete]
+Type: files; Name: "{app}\*.dll"
+Type: files; Name: "{app}\*\*.dll"
+Type: files; Name: "{app}\Lang\*.qm"
+Type: filesandordirs; Name: "{app}\bearer"
+Type: filesandordirs; Name: "{app}\Extensions"
+Type: filesandordirs; Name: "{app}\Fonts"
+Type: filesandordirs; Name: "{app}\iconengines"
+Type: filesandordirs; Name: "{app}\imageformats"
+Type: filesandordirs; Name: "{app}\License"
+Type: filesandordirs; Name: "{app}\licenses"
+Type: filesandordirs; Name: "{app}\platforms"
+Type: filesandordirs; Name: "{app}\printsupport"
+Type: filesandordirs; Name: "{app}\qml*"
+Type: filesandordirs; Name: "{app}\Qt"
+Type: filesandordirs; Name: "{app}\Qt*"
+Type: filesandordirs; Name: "{app}\Ssl"
+Type: filesandordirs; Name: "{app}\styles"
+
+[UninstallDelete]
+Type: files; Name: "{app}\Lang\*.ini"
+
+[Registry]
+;--- Register extention .ac2
+; Descrizione: File Types, http://msdn.microsoft.com/en-us/library/windows/desktop/cc144148%28v=vs.85%29.aspx
+Root: HKA; Subkey: Software\Classes\.ac2;
+Root: HKA; Subkey: Software\Classes\.ac2; ValueType: string; ValueName: PerceivedType; ValueData: document;
+Root: HKA; Subkey: Software\Classes\.ac2; ValueType: string; ValueName: Content Type; ValueData: application/vnd.banana-accounting;
+Root: HKA; Subkey: Software\Classes\.ac2\OpenWithProgids; ValueType: string; ValueName: {#m_appId}; ValueData: ; Flags: uninsdeletevalue;
+Root: HKA; Subkey: Software\Classes\.ac2; ValueType: string; ValueName: ; ValueData: {#m_appId};
+
+Root: HKA; Subkey: Software\Classes\.ac2.json;
+Root: HKA; Subkey: Software\Classes\.ac2.json; ValueType: string; ValueName: PerceivedType; ValueData: document;
+Root: HKA; Subkey: Software\Classes\.ac2.json\OpenWithProgids; ValueType: string; ValueName: {#m_appId}; ValueData: ; Flags: uninsdeletevalue;
+
+Root: HKA; Subkey: Software\Classes\.sba;
+Root: HKA; Subkey: Software\Classes\.sba; ValueType: string; ValueName: PerceivedType; ValueData: document;
+Root: HKA; Subkey: Software\Classes\.sba\OpenWithProgids; ValueType: string; ValueName: {#m_appId}; ValueData: ; Flags: uninsdeletevalue;
+
+Root: HKA; Subkey: Software\Classes\.sbaa;
+Root: HKA; Subkey: Software\Classes\.sbaa; ValueType: string; ValueName: PerceivedType; ValueData: document;
+Root: HKA; Subkey: Software\Classes\.sbaa\OpenWithProgids; ValueType: string; ValueName: {#m_appId}; ValueData: ; Flags: uninsdeletevalue;
+
+Root: HKA; Subkey: Software\Classes\.jcsv;
+Root: HKA; Subkey: Software\Classes\.jcsv; ValueType: string; ValueName: PerceivedType; ValueData: document;
+Root: HKA; Subkey: Software\Classes\.jcsv\OpenWithProgids; ValueType: string; ValueName: {#m_appId}; ValueData: ; Flags: uninsdeletevalue;
+
+Root: HKA; Subkey: Software\Classes\.xml\OpenWithProgids; ValueType: string; ValueName: {#m_appId}; ValueData: ; Flags: uninsdeletevalue;
+Root: HKA; Subkey: Software\Classes\.csv\OpenWithProgids; ValueType: string; ValueName: {#m_appId}; ValueData: ; Flags: uninsdeletevalue;
+
+
+;--- Register appid 
+; Descrizione: Application Registration, http://msdn.microsoft.com/en-us/library/windows/desktop/ee872121%28v=vs.85%29.aspx
+Root: HKA; Subkey: Software\Classes\{#m_appId}; Flags: deletekey uninsdeletekey;
+Root: HKA; Subkey: Software\Classes\{#m_appId}; ValueType: string; ValueName: ; ValueData: {cm:MyBananaFileDescr}; Flags: uninsdeletevalue;
+Root: HKA; Subkey: Software\Classes\{#m_appId}\DefaultIcon; ValueType: string; ValueName: ; ValueData: {app}\{#m_appExeName},0; Flags: uninsdeletevalue;
+Root: HKA; Subkey: Software\Classes\{#m_appId}\shell\open\command; ValueType: string; ValueName: ; ValueData: """{app}\{#m_appExeName}"" ""%1"""; Flags: uninsdeletevalue;
+
+;--- Informations about the installed program
+;Root: HKA; Subkey: Software\Banana.ch\{#m_application}; Flags: uninsdeletekey
+Root: HKA; Subkey: Software\Banana.ch\{#m_application}\General; ValueType: string; ValueName: AppPath; ValueData: {app}; Flags: uninsdeletevalue
+Root: HKA; Subkey: Software\Banana.ch\{#m_application}\General; ValueType: string; ValueName: ExePath; ValueData: {app}\{#m_appExeName}; Flags: uninsdeletevalue
+Root: HKA; Subkey: Software\Banana.ch\{#m_application}\General; ValueType: string; ValueName: Version; ValueData: {#m_exeShortVersion}; Flags: uninsdeletevalue
+
+
+#if (m_exe_nameSuffix == "Dev")
+[Tasks]
+  Name: RegisterAC2; Description: {cm:AssocFileExtension,{cm:m_appName,{#m_exeShortVersion}},AC2}; Flags: unchecked;
+#endif
+
+[Run]
+;Filename: "{app}\vc_redist.x64.exe"; Description: "{cm:SetupVSRedist}"; Parameters: "/install /passive /norestart"; StatusMsg: "{cm:SetupVSRedist}"; Check: not VCinstalled
+
+;Installazione con parametri mail e key
+;vedi CCmdExecute::Execute, "activate_sub"
+Filename: "{app}\{#m_appExeName}"; Parameters: "-cmd=activate_sub -cmd_p1={param:MAIL} -cmd_p2={param:KEY}"; Flags: skipifnotsilent runascurrentuser; Check: HasActivation
+
+;installazione normale, alla fine parte il programma
+Filename: "{app}\{#m_appExeName}"; Description: "{cm:LaunchProgram,{cm:m_appName}}"; Flags: nowait runasoriginaluser skipifsilent; Check: not HasActivation
+
+;installazione dopo update
+Filename: "{app}\{#m_appExeName}"; Flags: runasoriginaluser; Check: isUpdate
+
+[Code]
+{
+function VCinstalled: Boolean;
+  var key: String;
+  var verMajor, verMinor: Cardinal;
+begin
+  key := 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\X64';
+  Result := False;
+  if RegQueryDWordValue(HKEY_LOCAL_MACHINE, key, 'Major', verMajor) then begin
+    if RegQueryDWordValue(HKEY_LOCAL_MACHINE, key, 'Minor', verMinor) then begin
+      Result := (verMajor >= 14) and (verMinor >= 26);
+    end;
+  end;
+end;
+}
+
+{If Setup finds the UpdateReadyMemo event function in the Pascal script,
+ it is called automatically when the Ready to Install wizard page becomes the active page.}
+function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo,
+  MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;
+var
+  S: String;
+begin
+  { Fill the 'Ready Memo' with the normal settings and the custom settings }
+  S := S + 'Version: ' + '{#SetupSetting("AppVersion")}' + NewLine + NewLine;
+  S := S + MemoDirInfo + NewLine;
+  Result := S;
+end;
+
+{Controlla se ha tutti i parametri per fare l'attivazione offline}
+function HasActivation(): Boolean;
+var
+  pKey: String;
+  pMail: String;
+begin
+  Result := False;
+  pKey := ExpandConstant('{param:KEY}');
+  pMail := ExpandConstant('{param:MAIL}');
+  if (Length(pKey) > 0) and (Length(pMail) > 0) then
+    Result := True;
+end;
+
+
+{Controlla se ha tutti i parametri per fare l'attivazione offline}
+function isUpdate(): Boolean;
+var
+  pUpdate: String;
+begin
+  Result := False;
+  pUpdate := ExpandConstant('{param:ISUPDATE}');
+  if (Length(pUpdate) > 0) then
+    Result := True;
+end;

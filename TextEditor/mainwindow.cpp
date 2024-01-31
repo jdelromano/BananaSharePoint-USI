@@ -191,9 +191,7 @@ void MainWindow::about()
             this, tr("About %1").arg(this->windowTitle()),
             QString("<h2>") + this->windowTitle() + QString("</h2>") + "<p>"
                     + tr("This is a R&D project.") + "</p>"
-                    + "<p>" + tr("The objective is to create a small desktop application "
-                        "that reads and writes text files, with the capabilities "
-                        "to connect directly with Teams or sharepoint.")
+                    + "<p>" + tr("The objective is to create a small desktop application that reads and writes text files, with the capabilities to connect directly with Teams or sharepoint. Also testing the Qt translations")
                     + "</p>");
 }
 
@@ -272,6 +270,7 @@ MdiChild *MainWindow::createMdiChild()
 
 void MainWindow::createActions()
 {
+
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
     QToolBar *fileToolBar = addToolBar(tr("File"));
 
@@ -438,7 +437,23 @@ void MainWindow::createActions()
 
     QAction *aboutAct = helpMenu->addAction(tr("&About"), this, &MainWindow::about);
     aboutAct->setStatusTip(tr("Show the application's About box"));
+
+    QPushButton *languageSwitchButton = new QPushButton(tr("Switch to German"), this);
+    connect(languageSwitchButton, &QPushButton::clicked, this, &MainWindow::switchLanguageToGerman);
+    fileToolBar->addWidget(languageSwitchButton);
     }
+
+void MainWindow::switchLanguageToGerman()
+{
+    // Load German translation
+    QTranslator *translator = new QTranslator();
+    //translator.load("TextEditor.qm");
+    if (translator->load("C:/Users/Johan.Jacob/Documents/GitHub/BananaSharePoint-USI/TextEditor/TextEditor.qm") == true) {
+        qDebug() << "German translation loaded successfully.";
+        qApp->installTranslator(translator);
+        return;
+    }
+}
 
 void MainWindow::createStatusBar()
 {
